@@ -68,6 +68,20 @@ void print_grafo(std::vector < std::vector < int >>* grafo){
 	
 	}
 }
+
+void calculate_graus(std::vector < std::pair <int,int>>* graus, std::vector < std::vector < int>>* matrizAdj){
+
+	int qVertices = matrizAdj->size();
+	for(int i = 0; i < qVertices; i++){
+		int g = 0;
+		for(int j = 0; j < qVertices; j++){
+			
+			if((*matrizAdj)[i][j])
+				g+=1;
+		}
+		graus->push_back(std::make_pair(i, g));
+	}
+}
 int main(int argc, char** argv){
 	
 	if(argc < 2){
@@ -81,88 +95,138 @@ int main(int argc, char** argv){
 	
 	
 	int qVertices = grafo->size();
-	/*
-	int qVertices = grafo->size();
-	std::cout << qVertices << std::endl;
-	Tree* tree = new Tree(qVertices);
-	Kruskal kruskal(tree, grafo);
 	
-	kruskal.algorithm();
-	std::cout << "O resultado eh: " << kruskal.result << std::endl;
-	*/
 	float upper_bound = 148; // Iniciando com um valor aleatorio para teste
 	std::vector < float > weight_restr(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
-	std::vector < float > gradiente(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
+	std::vector < float > subgradiente(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
+	std::vector < float > weight_temp(qVertices, 0);
 	float epslon = 1;
-	float epslon_min = 0.5;
+	float epslon_min = 0.0005;
 	float w_ot = 0;
-	int k_max = 10;
+	int k_max = 30;
 	int k = 0;
+	float passos = 1.0;
+	
 
-
+	/* Como estamos resolvendo um problema relaxado
+	Queremos encontrar o melhor lower bound possivel,
+	pois como é um problema relaxado não é possivel ele ser melhor 
+	do que uma soluçao do problema original. Desse modo, para o TSP
+	é necessário achar uma árvore geradora mínima que não inclua o nó zero
+	Se acharmos uma solução em que os vértices não violem a restrição relaxada,
+	temos então a solução ótima para o problema relaxado como também para o problema original.
+	Os passos do algoritmo são o seguinte, resolvemos o problema relaxado sem o nó zero
+	achado sua solução ótima (w), alteramos o valor dos pesos baseado no mi e por fim recalculamos o mi
+	se foi achado um LB melhor, altera o LB, aplica na matriz original a redução a partir do subgradiente
+	e reseta o valor de k*/
 	do{
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
-
-		/* Só precisamos alterar o triangulo superior*/
-		for(int i = 0; i < qVertices; i++){
+		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
+			No primeiro loop esse vetor é nulo então o grafo de peso é o mesmo*/
+		for(int i = 1; i < qVertices; i++){
 			
-			for(int j = i + 1; j < qVertices; j++){
+			for(int j = 1; j < qVertices; j++){
+				if(i == j)
+					continue;
 				(grafo->at(i))[j] = (grafo->at(i))[j] - weight_restr[i] - weight_restr[j];
-			}
+			}	
 		}
-
+		
+		weight_temp = weight_restr;
 		/* Printando nova matriz para debug */
 		print_grafo(grafo);
+		
 		/* Inicializando o algoritmo de kruskal */
 		Tree* tree = new Tree(qVertices);
 		Kruskal kruskal(tree, grafo);
 		kruskal.algorithm();
 		float w = kruskal.result;
 		std::cout << "Valor do kruskal: " << w << std::endl;
-		std::vector < std::pair<int,int>>* graus = kruskal.getGraus();
-		if(w > w_ot){
-			w_ot = w;
-			std::cout << "Graus de cada vertice: ";
-			for(int i = 0; i < qVertices; i++){
-				std::cout << graus->at(i).second << " ";
+		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
+		/*Fim do algoritmo de kruskal */
+		print_grafo(matrizAdj);
+		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
+		int vertice_a, vertice_b;
+		int count = 0;
+		vertice_a = vertice_b = 1;
+
+		/* Começamos considerando a melhor aresta a primeira, nosso primeiro loop
+		encontrará a melhor primeira aresta, já no segundo loop faremos a mesma coisa*/
+		while(count < 2){
+			float bestAresta = grafo->at(0)[1];
+			for(int j = 2; j < qVertices; j++){
+				if(j == vertice_a)
+					continue;
+				if(grafo->at(0)[j] < bestAresta){
+					bestAresta = grafo->at(0)[j];
+					if(count == 0){
+						vertice_a = j;
+					}
+					else{
+						vertice_b = j;
+					}
+					
+				}
 			}
-			std::cout << std::endl;
-			/* Reformulando os valores do peso */
+			count++;
+		}
+		std::cout << "-------------------------------------" << std::endl;
+		/* Ativando as arestas */
+		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
+		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
+		(*matrizAdj)[vertice_a][vertice_b] = (*matrizAdj)[vertice_b][vertice_a] = 0;
+		print_grafo(matrizAdj);
 
-			std::cout << "Vetor gradiente: ";
-			for(int i = 0; i < qVertices; i++){
-				gradiente[i] = 2 - graus->at(i).second;
-				std::cout << gradiente[i] << " ";
-			}
-			std::cout << std::endl;
+		/* Calculo dos graus */
+		std::vector < std::pair < int, int >>graus;
+		
+		calculate_graus(&graus, matrizAdj);
 
-			/* Calculando o produto interno bruto do gradiente*/
-			float PI = 0;
-
-			for(int i = 0; i < qVertices; i++){
-				PI += (gradiente[i] * gradiente[i]);
-			}
-			std::cout << "Produto interno bruto: " << PI << std::endl;
-			std::cout << std::endl;
-
-			float value = (epslon * (upper_bound - w)) / PI;
+		std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
 			
-			std::vector < float > weight_temp;
-			std::cout << "Pesos temporarios: ";
-			for(int i = 0; i < qVertices; i++){
-				weight_temp.push_back(value* gradiente[i]);
-				std::cout << weight_temp[i] << " ";
-			}
-			std::cout << std::endl;
-			for(int i = 0; i < qVertices; i++){
-				weight_restr[i] += weight_temp[i];
-			}
-			std::cout << "Novos valores de peso: ";
-			for(int i = 0; i < qVertices; i++){
-				std::cout << weight_restr[i] << " ";
-			}
-			std::cout << std::endl;
+		std::cout << "Graus de cada vertice: ";
+		for(int i = 1; i < qVertices; i++){
+			std::cout << graus.at(i).second << " ";
+		}
+		std::cout << std::endl;
+
+		/* Calculando o vetor subsubgradiente*/
+		std::cout << "Vetor subgradiente: ";
+		for(int i = 1; i < qVertices; i++){
+			subgradiente[i] = 2 - graus.at(i).second;
+			std::cout << subgradiente[i] << " ";
+		}
+		std::cout << std::endl;
+
+		/* Altera o vetor de pesos */
+		std::cout << "Novo vetor de pesos: ";
+		for(int i = 1; i < qVertices; i++){
+			weight_temp[i] += (passos * subgradiente[i]);
+			std::cout << weight_temp[i] << " ";
+		}
+		std::cout << std::endl;
+		/* Calculando o produto interno bruto do subgradiente*/
+		float PI = 0;
+
+		for(int i = 1; i < qVertices; i++){
+			PI += (subgradiente[i] * subgradiente[i]);
+		}
+		std::cout << "Produto interno bruto: " << PI << std::endl;
+		std::cout << std::endl;
+		passos = ((epslon * (upper_bound - w))) / PI;
+		std::cout << "Novo valor de passo: " << passos << std::endl;
+
+		if(w > w_ot){
+			weight_restr = weight_temp;
+			
+			w_ot = w + grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
+			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
+			
 			k = 0;
+
+			
+			
+			
 			getchar();
 			continue;
 		}else{
@@ -170,7 +234,9 @@ int main(int argc, char** argv){
 			if (k > k_max){
 				k = 0;
 				epslon /= 2;
+				getchar();
 			}
+			
 		}
 		getchar();
 

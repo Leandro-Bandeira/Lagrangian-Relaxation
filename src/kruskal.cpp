@@ -6,6 +6,13 @@ Kruskal::Kruskal(Tree* tree,std::vector<std::vector<int>>*grafo ){
 	this->tree = tree;
 	this->grafo = grafo;
 	this->result = 0;
+
+	int qVertices = this->tree->getSize();
+	std::vector < int > matriz(qVertices,0);
+
+	for(int i = 0; i < qVertices; i++){
+		this->matrizAdj.push_back(matriz);
+	}
 }
 
 
@@ -15,7 +22,8 @@ void Kruskal::makeSet(){
 	
 	// Seta o pai de cada nó inicialmente como sendo ele próprio
 	// OU seja, cada nó é um nó raiz inicialmente
-	for(int i = 0; i < qVertices; i++){
+	/* Vamos começar em 1 pois estamos ignorando o nó zero*/
+	for(int i = 1; i < qVertices; i++){
 		
 			this->tree->setFather(i, i);
 			this->tree->setRank(i, 0);
@@ -106,6 +114,23 @@ std::vector < std::pair <int,int>>* Kruskal::getGraus(){
 	return &(this->graus);
 
 }
+
+std::vector < std::vector <int >> * Kruskal::getMatrizAdj(){
+
+	return &(this->matrizAdj);
+}
+
+
+void Kruskal::setMatrizAdj(){
+	int qVertices = this->tree->getSize();
+	
+
+	for(int i = 0; i < qVertices; i++){
+		for(Aresta aresta: arestasIn){
+			this->matrizAdj[aresta.vertice_A][aresta.vertice_B] = 1;
+		}
+	}
+}
 void Kruskal::algorithm(){
 		
 	makeSet();
@@ -122,11 +147,11 @@ void Kruskal::algorithm(){
 	std::priority_queue< Aresta, std::vector<Aresta>,decltype(comp) > arestasOrdenadas(comp);
 	/* Percorrendo as arestas	*/
 	int qVertices = this->tree->getSize();
-	for(int i = 0; i < qVertices; i++){
+	for(int i = 1; i < qVertices; i++){
 		
 		int col = this->grafo->at(i).size();
 
-		for(int j = 0; j < col; j++){
+		for(int j = 1; j < col; j++){
 		
 			/* Cria-se a aresta e então adiciona na priority_queue	*/
 			Aresta aresta;
@@ -163,6 +188,7 @@ void Kruskal::algorithm(){
 	}
 	std::cout << "----------" << std::endl;
 	calculate_grau();
+	setMatrizAdj();
 
 
 }
