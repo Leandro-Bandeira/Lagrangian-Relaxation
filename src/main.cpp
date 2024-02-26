@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 
-std::vector < std::vector < int > > * leitorInstancia(char* instanciaName){
+std::vector < std::vector < float > > * leitorInstancia(char* instanciaName){
 	
 	std::string linha;
 	std::string valor;
@@ -15,10 +15,10 @@ std::vector < std::vector < int > > * leitorInstancia(char* instanciaName){
 
 
 
-	std::vector < std::vector <int>  > * grafo = new std::vector < std::vector < int > >();
+	std::vector < std::vector <float>  > * grafo = new std::vector < std::vector < float > >();
 
 	while(std::getline(*arquivo, linha)){
-		std::vector < int > arestaValores;
+		std::vector < float > arestaValores;
 		std::stringstream dadosLinha(linha);
 		arestaValores.clear();
 
@@ -53,12 +53,28 @@ bool not_violation(std::vector<float>* weight_restr){
 	return 0;
 }
 
-void print_grafo(std::vector < std::vector < int >>* grafo){
+void print_grafo(std::vector < std::vector < float >>* grafo){
 	int size = grafo->size();
 
 	for(int i = 0; i < size; i++){
 
-		std::vector < int > vertice = grafo->at(i);
+		std::vector < float > vertice = grafo->at(i);
+		
+		for(int i = 0; i < vertice.size(); i++){
+				
+			std::cout << vertice[i] << " ";
+		}
+		std::cout << std::endl;
+	
+	}
+}
+
+void print_matrizAdj(std::vector < std::vector < int >>* matrizAdj){
+	int size = matrizAdj->size();
+
+	for(int i = 0; i < size; i++){
+
+		std::vector < int > vertice = matrizAdj->at(i);
 		
 		for(int i = 0; i < vertice.size(); i++){
 				
@@ -90,7 +106,7 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
-	std::vector < std::vector < int > >* grafo = leitorInstancia(argv[1]);
+	std::vector < std::vector < float > >* grafo = leitorInstancia(argv[1]);
 	
 	
 	
@@ -123,16 +139,17 @@ int main(int argc, char** argv){
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
 		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
 			No primeiro loop esse vetor é nulo então o grafo de peso é o mesmo*/
-		for(int i = 1; i < qVertices; i++){
+		for(int i = 0; i < qVertices; i++){
 			
-			for(int j = 1; j < qVertices; j++){
+			for(int j = 0; j < qVertices; j++){
 				if(i == j)
 					continue;
-				(grafo->at(i))[j] = (grafo->at(i))[j] - weight_restr[i] - weight_restr[j];
+				(grafo->at(i))[j] += - weight_restr[i] - weight_restr[j];
 			}	
 		}
 		
 		weight_temp = weight_restr;
+		std::cout << "Grafo Atualizado" << std::endl;
 		/* Printando nova matriz para debug */
 		print_grafo(grafo);
 		
@@ -144,17 +161,25 @@ int main(int argc, char** argv){
 		std::cout << "Valor do kruskal: " << w << std::endl;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
 		/*Fim do algoritmo de kruskal */
-		print_grafo(matrizAdj);
+		std::cout << "Matriz de adjacência antes da inserção do nó zero" << std::endl;
+		print_matrizAdj(matrizAdj);
 		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
 		int vertice_a, vertice_b;
 		int count = 0;
-		vertice_a = vertice_b = 1;
+		vertice_a = vertice_b = 0;
 
-		/* Começamos considerando a melhor aresta a primeira, nosso primeiro loop
-		encontrará a melhor primeira aresta, já no segundo loop faremos a mesma coisa*/
+		/* Inicialmente considera a melhor aresta a primeira de 0-1
+		Tenta achar a melhor, após isso é verdade que a aresta escolhida é a menor que tem
+		então devemos encontrar uma outra aresta que seja a segunda melhor*/
 		while(count < 2){
-			float bestAresta = grafo->at(0)[1];
-			for(int j = 2; j < qVertices; j++){
+			/*Quando escolhermos a melhor aresta, pode acontecer de vertice_a = tamnho do grafo - 1, se for devemos colocar  esse valor para 1*/
+			float bestAresta;
+			if(vertice_a == qVertices - 1){
+				bestAresta = grafo->at(0)[1];
+			}else{
+				bestAresta = grafo->at(0)[vertice_a + 1];
+			}
+			for(int j = 1; j < qVertices; j++){
 				if(j == vertice_a)
 					continue;
 				if(grafo->at(0)[j] < bestAresta){
@@ -170,44 +195,38 @@ int main(int argc, char** argv){
 			}
 			count++;
 		}
-		std::cout << "-------------------------------------" << std::endl;
+		
 		/* Ativando as arestas */
 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
 		(*matrizAdj)[vertice_a][vertice_b] = (*matrizAdj)[vertice_b][vertice_a] = 0;
-		print_grafo(matrizAdj);
-
+		std::cout << "Matriz de adjacência" << std::endl;
+		print_matrizAdj(matrizAdj);
+		std::cout << "-------------------------------------" << std::endl;
 		/* Calculo dos graus */
 		std::vector < std::pair < int, int >>graus;
-		
+		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b] - grafo->at(vertice_b)[vertice_a];
+		std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
 		calculate_graus(&graus, matrizAdj);
 
 		std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
 			
 		std::cout << "Graus de cada vertice: ";
-		for(int i = 1; i < qVertices; i++){
+		for(int i = 0; i < qVertices; i++){
 			std::cout << graus.at(i).second << " ";
 		}
 		std::cout << std::endl;
 
 		/* Calculando o vetor subsubgradiente*/
 		std::cout << "Vetor subgradiente: ";
-		for(int i = 1; i < qVertices; i++){
+		for(int i = 0; i < qVertices; i++){
 			subgradiente[i] = 2 - graus.at(i).second;
 			std::cout << subgradiente[i] << " ";
 		}
 		std::cout << std::endl;
 
-		/* Altera o vetor de pesos */
-		std::cout << "Novo vetor de pesos: ";
-		for(int i = 1; i < qVertices; i++){
-			weight_temp[i] += (passos * subgradiente[i]);
-			std::cout << weight_temp[i] << " ";
-		}
-		std::cout << std::endl;
 		/* Calculando o produto interno bruto do subgradiente*/
 		float PI = 0;
-
 		for(int i = 1; i < qVertices; i++){
 			PI += (subgradiente[i] * subgradiente[i]);
 		}
@@ -216,31 +235,38 @@ int main(int argc, char** argv){
 		passos = ((epslon * (upper_bound - w))) / PI;
 		std::cout << "Novo valor de passo: " << passos << std::endl;
 
+
+		/* Altera o vetor de pesos */
+		std::cout << "Novo vetor de pesos: ";
+		for(int i = 0; i < qVertices; i++){
+			weight_temp[i] += (passos * subgradiente[i]);
+			std::cout << weight_temp[i] << " ";
+		}
+		std::cout << std::endl;
+		
+
+		
+		
+		weight_restr = weight_temp;
 		if(w > w_ot){
-			weight_restr = weight_temp;
 			
-			w_ot = w + grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
+			
+			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
-			
+			getchar();
 			k = 0;
 
-			
-			
-			
-			getchar();
-			continue;
 		}else{
 			k += 1;
 			if (k > k_max){
 				k = 0;
 				epslon /= 2;
-				getchar();
 			}
 			
 		}
+		
 		getchar();
-
 	}while(epslon > epslon_min or not_violation(&weight_restr));
-	
+	std::cout << w_ot << std::endl;
 	return 0;
 }

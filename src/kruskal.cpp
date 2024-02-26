@@ -1,7 +1,7 @@
 #include "kruskal.h"
 
 
-Kruskal::Kruskal(Tree* tree,std::vector<std::vector<int>>*grafo ){
+Kruskal::Kruskal(Tree* tree,std::vector<std::vector<float>>*grafo ){
 
 	this->tree = tree;
 	this->grafo = grafo;
@@ -127,7 +127,7 @@ void Kruskal::setMatrizAdj(){
 
 	for(int i = 0; i < qVertices; i++){
 		for(Aresta aresta: arestasIn){
-			this->matrizAdj[aresta.vertice_A][aresta.vertice_B] = 1;
+			this->matrizAdj[aresta.vertice_A][aresta.vertice_B] = this->matrizAdj[aresta.vertice_B][aresta.vertice_A] = 1;			
 		}
 	}
 }
@@ -135,7 +135,6 @@ void Kruskal::algorithm(){
 		
 	makeSet();
 
-	std::cout << "Fez o makeset" << std::endl;	
 	
 		/* Função lambda responsável pela comparação em ordem não decrescente	*/
 	auto comp = [](const Aresta& a, const Aresta& b){
@@ -182,11 +181,12 @@ void Kruskal::algorithm(){
 		arestasOrdenadas.pop();
 
 	}
-	std::cout << "-----Arestas adicionadas-----" << std::endl;
+	
+	std::cout << "Arestas Utilizadas" << std::endl;
 	for(int  i = 0; i < this->arestasIn.size(); i++){
 		std::cout << this->arestasIn[i].vertice_A << "--" << this->arestasIn[i].vertice_B << std::endl;
 	}
-	std::cout << "----------" << std::endl;
+	
 	calculate_grau();
 	setMatrizAdj();
 

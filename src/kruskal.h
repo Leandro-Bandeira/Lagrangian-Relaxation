@@ -7,7 +7,7 @@
 
 class Kruskal{
 	public:
-		Kruskal(Tree* tree, std::vector< std::vector<int>>*grafo);
+		Kruskal(Tree* tree, std::vector< std::vector<float>>*grafo);
 		void makeSet();
 		int findSet(int vertice);
 		int setUnion(int vertice_a, int vertice_b);
@@ -20,7 +20,7 @@ class Kruskal{
 	private:
 		Tree* tree;
 		std::vector <std::vector <int>> matrizAdj;
-		std::vector < std::vector < int>>*grafo;
+		std::vector < std::vector < float>>*grafo;
 		std::vector < std::pair<int,int>> graus; // Vetor que indica o vértice e seu grau
 		std::vector < Aresta > arestasIn;
 };
