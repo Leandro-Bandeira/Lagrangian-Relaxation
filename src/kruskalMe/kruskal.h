@@ -16,7 +16,7 @@ class Kruskal{
 		std::vector < std::pair <int,int>>* getGraus();
 		std::vector < std::vector <int>>* getMatrizAdj();
 		void setMatrizAdj();
-		int result;
+		float result;
 	private:
 		Tree* tree;
 		std::vector <std::vector <int>> matrizAdj;

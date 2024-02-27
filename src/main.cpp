@@ -5,6 +5,12 @@
 #include <fstream>
 #include <cstdlib>
 #include <sstream>
+#include <algorithm>
+
+typedef struct{
+	int vertice;
+	float valueAresta;
+}tNode;
 
 std::vector < std::vector < float > > * leitorInstancia(char* instanciaName){
 	
@@ -164,48 +170,38 @@ int main(int argc, char** argv){
 		std::cout << "Matriz de adjacência antes da inserção do nó zero" << std::endl;
 		print_matrizAdj(matrizAdj);
 		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
-		int vertice_a, vertice_b;
-		int count = 0;
-		vertice_a = vertice_b = 0;
+	
+		/* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
+		std::vector < std::pair<int, float> > nodesSortedByEdge0;
+		
 
-		/* Inicialmente considera a melhor aresta a primeira de 0-1
-		Tenta achar a melhor, após isso é verdade que a aresta escolhida é a menor que tem
-		então devemos encontrar uma outra aresta que seja a segunda melhor*/
-		while(count < 2){
-			/*Quando escolhermos a melhor aresta, pode acontecer de vertice_a = tamnho do grafo - 1, se for devemos colocar  esse valor para 1*/
-			float bestAresta;
-			if(vertice_a == qVertices - 1){
-				bestAresta = grafo->at(0)[1];
-			}else{
-				bestAresta = grafo->at(0)[vertice_a + 1];
-			}
-			for(int j = 1; j < qVertices; j++){
-				if(j == vertice_a)
-					continue;
-				if(grafo->at(0)[j] < bestAresta){
-					bestAresta = grafo->at(0)[j];
-					if(count == 0){
-						vertice_a = j;
-					}
-					else{
-						vertice_b = j;
-					}
-					
-				}
-			}
-			count++;
+		/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
+		for(int j = 1; j < qVertices; j++){
+			nodesSortedByEdge0.push_back(std::make_pair(j, grafo->at(0)[j]));
 		}
+
+		/* A função indica se a deve ser ordenado antes de b ou não,
+		se for true, a será ordenado antes de b, caso não será b
+		então se a for menor ou igual a b, a será ordenado antes de b
+		Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
+		sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,float>&a, std::pair<int,float>const &b)
+		{
+				return a.second >= b.second;
+		});
+
+		int vertice_a = nodesSortedByEdge0.back().first;
+		nodesSortedByEdge0.pop_back();
+		int vertice_b = nodesSortedByEdge0.back().first;
 		
 		/* Ativando as arestas */
 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
-		(*matrizAdj)[vertice_a][vertice_b] = (*matrizAdj)[vertice_b][vertice_a] = 0;
 		std::cout << "Matriz de adjacência" << std::endl;
 		print_matrizAdj(matrizAdj);
 		std::cout << "-------------------------------------" << std::endl;
 		/* Calculo dos graus */
 		std::vector < std::pair < int, int >>graus;
-		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b] - grafo->at(vertice_b)[vertice_a];
+		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
 		std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
 		calculate_graus(&graus, matrizAdj);
 
@@ -224,7 +220,7 @@ int main(int argc, char** argv){
 			std::cout << subgradiente[i] << " ";
 		}
 		std::cout << std::endl;
-
+		
 		/* Calculando o produto interno bruto do subgradiente*/
 		float PI = 0;
 		for(int i = 1; i < qVertices; i++){
@@ -243,17 +239,12 @@ int main(int argc, char** argv){
 			std::cout << weight_temp[i] << " ";
 		}
 		std::cout << std::endl;
-		
-
-		
-		
 		weight_restr = weight_temp;
-		if(w > w_ot){
-			
-			
+
+		if(w > w_ot){	
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
-			getchar();
+			//getchar();
 			k = 0;
 
 		}else{
@@ -261,12 +252,15 @@ int main(int argc, char** argv){
 			if (k > k_max){
 				k = 0;
 				epslon /= 2;
+				//getchar();
 			}
 			
 		}
 		
 		getchar();
 	}while(epslon > epslon_min or not_violation(&weight_restr));
+	std::cout << epslon_min << std::endl;
+	std::cout << not_violation(&weight_restr) << std::endl;
 	std::cout << w_ot << std::endl;
 	return 0;
 }
