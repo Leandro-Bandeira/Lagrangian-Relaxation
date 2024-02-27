@@ -51,7 +51,7 @@ bool not_violation(std::vector<float>* weight_restr){
 
 	for(int i = 0; i < weight_restr->size(); i++){
 		
-		sumWeight += weight_restr->at(i);
+		sumWeight += (int)weight_restr->at(i);
 	}
 	if(sumWeight == 0){
 		return 1;
@@ -257,10 +257,10 @@ int main(int argc, char** argv){
 			
 		}
 		
-		getchar();
-	}while(epslon > epslon_min or not_violation(&weight_restr));
+		//getchar();
+	}while(epslon > epslon_min and not_violation(&subgradiente));
 	std::cout << epslon_min << std::endl;
-	std::cout << not_violation(&weight_restr) << std::endl;
+	std::cout << not_violation(&subgradiente) << std::endl;
 	std::cout << w_ot << std::endl;
 	return 0;
 }
