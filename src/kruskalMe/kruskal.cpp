@@ -1,7 +1,7 @@
 #include "kruskal.h"
 
 
-Kruskal::Kruskal(Tree* tree,std::vector<std::vector<float>>*grafo ){
+Kruskal::Kruskal(Tree* tree,std::vector<std::vector<double>>*grafo ){
 
 	this->tree = tree;
 	this->grafo = grafo;

@@ -10,7 +10,7 @@ typedef struct Element{
 	
 	int vertice_A;
 	int vertice_B;
-	float peso;
+	double peso;
 
 }Aresta;
 

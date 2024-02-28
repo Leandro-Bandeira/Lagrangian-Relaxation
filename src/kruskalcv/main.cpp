@@ -119,7 +119,7 @@ void getMatrizAdj(std::vector < std::vector<int>>* matrizAdj, std::vector < std:
 
 int main(int argc, char** argv){
 	
-	if(argc < 2){
+	if(argc < 3){
 
 		std::cout << "Digite ./main -nome instancia-\n";
 		exit(1);
@@ -127,12 +127,12 @@ int main(int argc, char** argv){
 
 	std::vector < std::vector < double > >* grafo = leitorInstancia(argv[1]);
 	int qVertices = grafo->size();
-
 	
 	
 	
 	
-	double upper_bound = 148; // Iniciando com um valor aleatorio para teste
+	
+	double upper_bound = std::stoi(argv[2]);
 	std::vector < double > weight_restr(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
 	std::vector < double > subgradiente(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
 	std::vector < double > weight_temp(qVertices, 0);
@@ -245,7 +245,7 @@ int main(int argc, char** argv){
 		
 		/* Calculando o produto interno bruto do subgradiente*/
 		double PI = 0;
-		for(int i = 1; i < qVertices; i++){
+		for(int i = 0; i < qVertices; i++){
 			PI += (subgradiente[i] * subgradiente[i]);
 		}
 		std::cout << "Produto interno bruto: " << PI << std::endl;
@@ -271,7 +271,7 @@ int main(int argc, char** argv){
 
 		}else{
 			k += 1;
-			if (k > k_max){
+			if (k >= k_max){
 				k = 0;
 				epslon /= 2;
 				//getchar();
@@ -281,7 +281,7 @@ int main(int argc, char** argv){
 		
 		//getchar();
 	}while(epslon > epslon_min and not_violation(&subgradiente));
-	std::cout << epslon_min << std::endl;
+	std::cout << epslon << std::endl;
 	std::cout << not_violation(&weight_restr) << std::endl;
 	std::cout << w_ot << std::endl;
 	return 0;

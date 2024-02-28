@@ -9,10 +9,10 @@
 
 typedef struct{
 	int vertice;
-	float valueAresta;
+	double valueAresta;
 }tNode;
 
-std::vector < std::vector < float > > * leitorInstancia(char* instanciaName){
+std::vector < std::vector < double > > * leitorInstancia(char* instanciaName){
 	
 	std::string linha;
 	std::string valor;
@@ -21,10 +21,10 @@ std::vector < std::vector < float > > * leitorInstancia(char* instanciaName){
 
 
 
-	std::vector < std::vector <float>  > * grafo = new std::vector < std::vector < float > >();
+	std::vector < std::vector <double>  > * grafo = new std::vector < std::vector < double > >();
 
 	while(std::getline(*arquivo, linha)){
-		std::vector < float > arestaValores;
+		std::vector < double > arestaValores;
 		std::stringstream dadosLinha(linha);
 		arestaValores.clear();
 
@@ -46,25 +46,22 @@ std::vector < std::vector < float > > * leitorInstancia(char* instanciaName){
 }
 
 /* Verifica se os pesos são todos nulos*/
-bool not_violation(std::vector<float>* weight_restr){
-	int sumWeight = 0;
+bool not_violation(std::vector<int>* subgradiente){
+	int sum = 0;
 
-	for(int i = 0; i < weight_restr->size(); i++){
+	for(int i = 0; i < subgradiente->size(); i++){
 		
-		sumWeight += (int)weight_restr->at(i);
+		sum += std::abs(subgradiente->at(i));
 	}
-	if(sumWeight == 0){
-		return 1;
-	}
-	return 0;
+	return sum;
 }
 
-void print_grafo(std::vector < std::vector < float >>* grafo){
+void print_grafo(std::vector < std::vector < double >>* grafo){
 	int size = grafo->size();
 
 	for(int i = 0; i < size; i++){
 
-		std::vector < float > vertice = grafo->at(i);
+		std::vector < double > vertice = grafo->at(i);
 		
 		for(int i = 0; i < vertice.size(); i++){
 				
@@ -106,28 +103,29 @@ void calculate_graus(std::vector < std::pair <int,int>>* graus, std::vector < st
 }
 int main(int argc, char** argv){
 	
-	if(argc < 2){
+	if(argc < 3){
 
-		std::cout << "Digite ./main -nome instancia-\n";
+		std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
 		exit(1);
 	}
 
-	std::vector < std::vector < float > >* grafo = leitorInstancia(argv[1]);
+
+	
+	std::vector < std::vector < double > >* grafo = leitorInstancia(argv[1]);
 	
 	
 	
 	int qVertices = grafo->size();
 	
-	float upper_bound = 148; // Iniciando com um valor aleatorio para teste
-	std::vector < float > weight_restr(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
-	std::vector < float > subgradiente(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
-	std::vector < float > weight_temp(qVertices, 0);
-	float epslon = 1;
-	float epslon_min = 0.0005;
-	float w_ot = 0;
+	double upper_bound = std::stoi(argv[2]); // Iniciando com um valor aleatorio para teste
+	std::vector < double > weight_restr(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
+	std::vector < int > subgradiente(qVertices, 0); // Vetor subgradiente
+	double epslon = 1;
+	double epslon_min = 0.0005;
+	double w_ot = 0;
 	int k_max = 30;
 	int k = 0;
-	float passos = 1.0;
+	double passos = 1.0;
 	
 
 	/* Como estamos resolvendo um problema relaxado
@@ -154,7 +152,6 @@ int main(int argc, char** argv){
 			}	
 		}
 		
-		weight_temp = weight_restr;
 		std::cout << "Grafo Atualizado" << std::endl;
 		/* Printando nova matriz para debug */
 		print_grafo(grafo);
@@ -163,7 +160,7 @@ int main(int argc, char** argv){
 		Tree* tree = new Tree(qVertices);
 		Kruskal kruskal(tree, grafo);
 		kruskal.algorithm();
-		float w = kruskal.result;
+		double w = kruskal.result;
 		std::cout << "Valor do kruskal: " << w << std::endl;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
 		/*Fim do algoritmo de kruskal */
@@ -172,7 +169,7 @@ int main(int argc, char** argv){
 		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
 	
 		/* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
-		std::vector < std::pair<int, float> > nodesSortedByEdge0;
+		std::vector < std::pair<int, double> > nodesSortedByEdge0;
 		
 
 		/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
@@ -184,7 +181,7 @@ int main(int argc, char** argv){
 		se for true, a será ordenado antes de b, caso não será b
 		então se a for menor ou igual a b, a será ordenado antes de b
 		Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
-		sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,float>&a, std::pair<int,float>const &b)
+		sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
 		{
 				return a.second >= b.second;
 		});
@@ -199,10 +196,11 @@ int main(int argc, char** argv){
 		std::cout << "Matriz de adjacência" << std::endl;
 		print_matrizAdj(matrizAdj);
 		std::cout << "-------------------------------------" << std::endl;
-		/* Calculo dos graus */
-		std::vector < std::pair < int, int >>graus;
+		
 		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
 		std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
+		/* Calculo dos graus */
+		std::vector < std::pair < int, int >>graus;
 		calculate_graus(&graus, matrizAdj);
 
 		std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
@@ -222,8 +220,8 @@ int main(int argc, char** argv){
 		std::cout << std::endl;
 		
 		/* Calculando o produto interno bruto do subgradiente*/
-		float PI = 0;
-		for(int i = 1; i < qVertices; i++){
+		double PI = 0;
+		for(int i = 0; i < qVertices; i++){
 			PI += (subgradiente[i] * subgradiente[i]);
 		}
 		std::cout << "Produto interno bruto: " << PI << std::endl;
@@ -235,11 +233,10 @@ int main(int argc, char** argv){
 		/* Altera o vetor de pesos */
 		std::cout << "Novo vetor de pesos: ";
 		for(int i = 0; i < qVertices; i++){
-			weight_temp[i] += (passos * subgradiente[i]);
-			std::cout << weight_temp[i] << " ";
+			weight_restr[i] += (passos * subgradiente[i]);
+			std::cout << weight_restr[i] << " ";
 		}
 		std::cout << std::endl;
-		weight_restr = weight_temp;
 
 		if(w > w_ot){	
 			w_ot = w;
@@ -249,7 +246,7 @@ int main(int argc, char** argv){
 
 		}else{
 			k += 1;
-			if (k > k_max){
+			if (k >= k_max){
 				k = 0;
 				epslon /= 2;
 				//getchar();
@@ -257,9 +254,8 @@ int main(int argc, char** argv){
 			
 		}
 		
-		//getchar();
 	}while(epslon > epslon_min and not_violation(&subgradiente));
-	std::cout << epslon_min << std::endl;
+	std::cout << epslon << std::endl;
 	std::cout << not_violation(&subgradiente) << std::endl;
 	std::cout << w_ot << std::endl;
 	return 0;
