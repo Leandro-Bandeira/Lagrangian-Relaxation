@@ -65,9 +65,9 @@ void print_grafo(std::vector < std::vector < double >>* grafo){
 		
 		for(int i = 0; i < vertice.size(); i++){
 				
-			std::cout << vertice[i] << " ";
+			//std::cout << vertice[i] << " ";
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	
 	}
 }
@@ -81,9 +81,9 @@ void print_matrizAdj(std::vector < std::vector < int >>* matrizAdj){
 		
 		for(int i = 0; i < vertice.size(); i++){
 				
-			std::cout << vertice[i] << " ";
+			//std::cout << vertice[i] << " ";
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	
 	}
 }
@@ -105,13 +105,14 @@ int main(int argc, char** argv){
 	
 	if(argc < 3){
 
-		std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
+		//std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
 		exit(1);
 	}
 
 
 	
 	std::vector < std::vector < double > >* grafo = leitorInstancia(argv[1]);
+	std::vector < std::vector < double > > grafoOriginal = *grafo;
 	
 	
 	
@@ -148,11 +149,12 @@ int main(int argc, char** argv){
 			for(int j = 0; j < qVertices; j++){
 				if(i == j)
 					continue;
-				(grafo->at(i))[j] += - weight_restr[i] - weight_restr[j];
+				(*grafo)[i][j] = grafoOriginal[i][j]- weight_restr[i] - weight_restr[j];
 			}	
 		}
 		
-		std::cout << "Grafo Atualizado" << std::endl;
+		
+		//std::cout << "Grafo Atualizado" << std::endl;
 		/* Printando nova matriz para debug */
 		print_grafo(grafo);
 		
@@ -161,10 +163,10 @@ int main(int argc, char** argv){
 		Kruskal kruskal(tree, grafo);
 		kruskal.algorithm();
 		double w = kruskal.result;
-		std::cout << "Valor do kruskal: " << w << std::endl;
+		//std::cout << "Valor do kruskal: " << w << std::endl;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
 		/*Fim do algoritmo de kruskal */
-		std::cout << "Matriz de adjacência antes da inserção do nó zero" << std::endl;
+		//std::cout << "Matriz de adjacência antes da inserção do nó zero" << std::endl;
 		print_matrizAdj(matrizAdj);
 		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
 	
@@ -193,55 +195,63 @@ int main(int argc, char** argv){
 		/* Ativando as arestas */
 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
-		std::cout << "Matriz de adjacência" << std::endl;
+		//std::cout << "Matriz de adjacência" << std::endl;
 		print_matrizAdj(matrizAdj);
-		std::cout << "-------------------------------------" << std::endl;
+		//std::cout << "-------------------------------------" << std::endl;
 		
 		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
-		std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
+		//std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
 		/* Calculo dos graus */
 		std::vector < std::pair < int, int >>graus;
 		calculate_graus(&graus, matrizAdj);
-
-		std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
-			
-		std::cout << "Graus de cada vertice: ";
+		double sum = 0;
 		for(int i = 0; i < qVertices; i++){
-			std::cout << graus.at(i).second << " ";
+			sum += 2 * weight_restr[i];
 		}
-		std::cout << std::endl;
+		//std::cout << sum << std::endl;
+		//std::cout << "Valor da FO após a compensação  " << w << std::endl;
+		//std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
+			
+		//std::cout << "Graus de cada vertice: ";
+		for(int i = 0; i < qVertices; i++){
+			//std::cout << graus.at(i).second << " ";
+		}
+		//std::cout << std::endl;
 
 		/* Calculando o vetor subsubgradiente*/
-		std::cout << "Vetor subgradiente: ";
+		//std::cout << "Vetor subgradiente: ";
 		for(int i = 0; i < qVertices; i++){
 			subgradiente[i] = 2 - graus.at(i).second;
-			std::cout << subgradiente[i] << " ";
+			//std::cout << subgradiente[i] << " ";
 		}
-		std::cout << std::endl;
+
 		
 		/* Calculando o produto interno bruto do subgradiente*/
 		double PI = 0;
 		for(int i = 0; i < qVertices; i++){
 			PI += (subgradiente[i] * subgradiente[i]);
 		}
-		std::cout << "Produto interno bruto: " << PI << std::endl;
-		std::cout << std::endl;
+		//std::cout << "Produto interno: " << PI << std::endl;
+		//std::cout << std::endl;
 		passos = ((epslon * (upper_bound - w))) / PI;
-		std::cout << "Novo valor de passo: " << passos << std::endl;
+		//std::cout << "Novo valor de passo: " << passos << std::endl;
 
 
 		/* Altera o vetor de pesos */
-		std::cout << "Novo vetor de pesos: ";
+		////std::cout << "Novo vetor de pesos: ";
 		for(int i = 0; i < qVertices; i++){
 			weight_restr[i] += (passos * subgradiente[i]);
-			std::cout << weight_restr[i] << " ";
+		//	//std::cout << weight_restr[i] << " ";
 		}
-		std::cout << std::endl;
+		////std::cout << std::endl;
 
 		if(w > w_ot){	
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 			//getchar();
+			if(!not_violation(&subgradiente))
+				break;
+		
 			k = 0;
 
 		}else{
@@ -254,9 +264,9 @@ int main(int argc, char** argv){
 			
 		}
 		
-	}while(epslon > epslon_min and not_violation(&subgradiente));
-	std::cout << epslon << std::endl;
-	std::cout << not_violation(&subgradiente) << std::endl;
-	std::cout << w_ot << std::endl;
+	}while(epslon > epslon_min);
+	//std::cout << epslon << std::endl;
+	//std::cout << not_violation(&subgradiente) << std::endl;
+	//std::cout << w_ot << std::endl;
 	return 0;
 }

@@ -225,6 +225,12 @@ int main(int argc, char** argv){
 		std::vector < std::pair < int, int >>graus;
 		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
 		std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
+		
+		/* Somando FO por 2*cada multiplicador */
+
+		for(int i = 0; i < qVertices; i++){
+			w += 2 * weight_restr[i];
+		}
 		calculate_graus(&graus, &matrizAdj);
 
 		std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
@@ -263,10 +269,14 @@ int main(int argc, char** argv){
 		std::cout << std::endl;
 		weight_restr = weight_temp;
 
+		//if(w < 0){
+		//	getchar();
+		//}
 		if(w > w_ot){	
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 			//getchar();
+			getchar();
 			k = 0;
 
 		}else{

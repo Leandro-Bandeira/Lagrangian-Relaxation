@@ -182,11 +182,12 @@ void Kruskal::algorithm(){
 
 	}
 	
+	/*
 	std::cout << "Arestas Utilizadas" << std::endl;
 	for(int  i = 0; i < this->arestasIn.size(); i++){
 		std::cout << this->arestasIn[i].vertice_A << "--" << this->arestasIn[i].vertice_B << std::endl;
 	}
-	
+	*/
 	calculate_grau();
 	setMatrizAdj();
 
