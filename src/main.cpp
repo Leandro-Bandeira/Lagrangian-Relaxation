@@ -46,47 +46,16 @@ std::vector < std::vector < double > > * leitorInstancia(char* instanciaName){
 }
 
 /* Verifica se os pesos são todos nulos*/
-bool not_violation(std::vector<int>* subgradiente){
+bool not_violation(std::vector<int>* subgradient){
 	int sum = 0;
 
-	for(int i = 0; i < subgradiente->size(); i++){
+	for(int i = 0; i < subgradient->size(); i++){
 		
-		sum += std::abs(subgradiente->at(i));
+		sum += std::abs(subgradient->at(i));
 	}
 	return sum;
 }
 
-void print_grafo(std::vector < std::vector < double >>* grafo){
-	int size = grafo->size();
-
-	for(int i = 0; i < size; i++){
-
-		std::vector < double > vertice = grafo->at(i);
-		
-		for(int i = 0; i < vertice.size(); i++){
-				
-			//std::cout << vertice[i] << " ";
-		}
-		//std::cout << std::endl;
-	
-	}
-}
-
-void print_matrizAdj(std::vector < std::vector < int >>* matrizAdj){
-	int size = matrizAdj->size();
-
-	for(int i = 0; i < size; i++){
-
-		std::vector < int > vertice = matrizAdj->at(i);
-		
-		for(int i = 0; i < vertice.size(); i++){
-				
-			//std::cout << vertice[i] << " ";
-		}
-		//std::cout << std::endl;
-	
-	}
-}
 
 void calculate_graus(std::vector < std::pair <int,int>>* graus, std::vector < std::vector < int>>* matrizAdj){
 
@@ -105,22 +74,23 @@ int main(int argc, char** argv){
 	
 	if(argc < 3){
 
-		//std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
+		std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
 		exit(1);
 	}
 
 
-	
 	std::vector < std::vector < double > >* grafo = leitorInstancia(argv[1]);
 	std::vector < std::vector < double > > grafoOriginal = *grafo;
 	
 	
 	
-	int qVertices = grafo->size();
 	
-	double upper_bound = std::stoi(argv[2]); // Iniciando com um valor aleatorio para teste
-	std::vector < double > weight_restr(qVertices, 0); // Inicializando o vetor de peso das restrições para cada vértice como nulo
-	std::vector < int > subgradiente(qVertices, 0); // Vetor subgradiente
+
+	/* Configuração da relaxação */	
+	int qVertices = grafo->size();
+	double upper_bound = std::stoi(argv[2]); // Upper_bound dado por alguma heuristica conhecida
+	std::vector < double > harsh(qVertices, 0); // Vetor penalizador
+	std::vector < int > subgradient(qVertices, 0); // Vetor subgradient
 	double epslon = 1;
 	double epslon_min = 0.0005;
 	double w_ot = 0;
@@ -138,7 +108,7 @@ int main(int argc, char** argv){
 	temos então a solução ótima para o problema relaxado como também para o problema original.
 	Os passos do algoritmo são o seguinte, resolvemos o problema relaxado sem o nó zero
 	achado sua solução ótima (w), alteramos o valor dos pesos baseado no mi e por fim recalculamos o mi
-	se foi achado um LB melhor, altera o LB, aplica na matriz original a redução a partir do subgradiente
+	se foi achado um LB melhor, altera o LB, aplica na matriz original a redução a partir do subgradient
 	e reseta o valor de k*/
 	do{
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
@@ -149,14 +119,14 @@ int main(int argc, char** argv){
 			for(int j = 0; j < qVertices; j++){
 				if(i == j)
 					continue;
-				(*grafo)[i][j] = grafoOriginal[i][j]- weight_restr[i] - weight_restr[j];
+				(*grafo)[i][j] = grafoOriginal[i][j]- harsh[i] - harsh[j];
 			}	
 		}
 		
 		
 		//std::cout << "Grafo Atualizado" << std::endl;
 		/* Printando nova matriz para debug */
-		print_grafo(grafo);
+		
 		
 		/* Inicializando o algoritmo de kruskal */
 		Tree* tree = new Tree(qVertices);
@@ -166,9 +136,7 @@ int main(int argc, char** argv){
 		//std::cout << "Valor do kruskal: " << w << std::endl;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
 		/*Fim do algoritmo de kruskal */
-		//std::cout << "Matriz de adjacência antes da inserção do nó zero" << std::endl;
-		print_matrizAdj(matrizAdj);
-		/* Para definir o lower bound devemos adicionar o nó zero de forma gulosa */
+		
 	
 		/* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
 		std::vector < std::pair<int, double> > nodesSortedByEdge0;
@@ -196,7 +164,7 @@ int main(int argc, char** argv){
 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
 		//std::cout << "Matriz de adjacência" << std::endl;
-		print_matrizAdj(matrizAdj);
+		
 		//std::cout << "-------------------------------------" << std::endl;
 		
 		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
@@ -206,7 +174,7 @@ int main(int argc, char** argv){
 		calculate_graus(&graus, matrizAdj);
 		double sum = 0;
 		for(int i = 0; i < qVertices; i++){
-			sum += 2 * weight_restr[i];
+			sum += 2 * harsh[i];
 		}
 		//std::cout << sum << std::endl;
 		//std::cout << "Valor da FO após a compensação  " << w << std::endl;
@@ -218,18 +186,18 @@ int main(int argc, char** argv){
 		}
 		//std::cout << std::endl;
 
-		/* Calculando o vetor subsubgradiente*/
-		//std::cout << "Vetor subgradiente: ";
+		/* Calculando o vetor subsubgradient*/
+		//std::cout << "Vetor subgradient: ";
 		for(int i = 0; i < qVertices; i++){
-			subgradiente[i] = 2 - graus.at(i).second;
-			//std::cout << subgradiente[i] << " ";
+			subgradient[i] = 2 - graus.at(i).second;
+			//std::cout << subgradient[i] << " ";
 		}
 
 		
-		/* Calculando o produto interno bruto do subgradiente*/
+		/* Calculando o produto interno bruto do subgradient*/
 		double PI = 0;
 		for(int i = 0; i < qVertices; i++){
-			PI += (subgradiente[i] * subgradiente[i]);
+			PI += (subgradient[i] * subgradient[i]);
 		}
 		//std::cout << "Produto interno: " << PI << std::endl;
 		//std::cout << std::endl;
@@ -240,8 +208,8 @@ int main(int argc, char** argv){
 		/* Altera o vetor de pesos */
 		////std::cout << "Novo vetor de pesos: ";
 		for(int i = 0; i < qVertices; i++){
-			weight_restr[i] += (passos * subgradiente[i]);
-		//	//std::cout << weight_restr[i] << " ";
+			harsh[i] += (passos * subgradient[i]);
+		//	//std::cout << harsh[i] << " ";
 		}
 		////std::cout << std::endl;
 
@@ -249,7 +217,7 @@ int main(int argc, char** argv){
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 			//getchar();
-			if(!not_violation(&subgradiente))
+			if(!not_violation(&subgradient))
 				break;
 		
 			k = 0;
@@ -266,7 +234,7 @@ int main(int argc, char** argv){
 		
 	}while(epslon > epslon_min);
 	//std::cout << epslon << std::endl;
-	//std::cout << not_violation(&subgradiente) << std::endl;
+	//std::cout << not_violation(&subgradient) << std::endl;
 	//std::cout << w_ot << std::endl;
 	return 0;
 }
