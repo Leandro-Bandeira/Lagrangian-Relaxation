@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <algorithm>
+#include "graph.h"
 
 typedef struct{
 	int vertice;
@@ -57,19 +58,7 @@ bool not_violation(std::vector<int>* subgradient){
 }
 
 
-void calculate_graus(std::vector < std::pair <int,int>>* graus, std::vector < std::vector < int>>* matrizAdj){
 
-	int qVertices = matrizAdj->size();
-	for(int i = 0; i < qVertices; i++){
-		int g = 0;
-		for(int j = 0; j < qVertices; j++){
-			
-			if((*matrizAdj)[i][j])
-				g+=1;
-		}
-		graus->push_back(std::make_pair(i, g));
-	}
-}
 int main(int argc, char** argv){
 	
 	if(argc < 3){
@@ -96,7 +85,7 @@ int main(int argc, char** argv){
 	double w_ot = 0;
 	int k_max = 30;
 	int k = 0;
-	double passos = 1.0;
+	double step = 1.0;
 	
 
 	/* Como estamos resolvendo um problema relaxado
@@ -106,10 +95,11 @@ int main(int argc, char** argv){
 	é necessário achar uma árvore geradora mínima que não inclua o nó zero
 	Se acharmos uma solução em que os vértices não violem a restrição relaxada,
 	temos então a solução ótima para o problema relaxado como também para o problema original.
-	Os passos do algoritmo são o seguinte, resolvemos o problema relaxado sem o nó zero
-	achado sua solução ótima (w), alteramos o valor dos pesos baseado no mi e por fim recalculamos o mi
-	se foi achado um LB melhor, altera o LB, aplica na matriz original a redução a partir do subgradient
-	e reseta o valor de k*/
+	Os step do algoritmo são o seguinte, resolvemos o problema relaxado sem o nó zero
+	achado sua solução ótima (w), adiciona o nó zero nas duas melhores arestas, soma-se o valor do w com as duas novas arestas
+	então adiciona a w o valor dos penalizadores
+	Apos isso calcula o vetor subgradiente, que é dado por 2 - grau de cada vértice
+	calcula o passo e então muda o valor dos penalizadores, se acharmos um w melhor que o w_ot, atualizamos e resetamos k*/
 	do{
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
 		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
@@ -163,63 +153,39 @@ int main(int argc, char** argv){
 		/* Ativando as arestas */
 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
-		//std::cout << "Matriz de adjacência" << std::endl;
-		
-		//std::cout << "-------------------------------------" << std::endl;
+
+
+		Graph graphOperation = Graph(matrizAdj);
+		graphOperation.calculateRates();
+		std::vector< int> * rates = graphOperation.getRates();
 		
 		w += grafo->at(0)[vertice_a] + grafo->at(0)[vertice_b];
-		//std::cout << "Valor da FO após a inserção do nó zero: " << w << std::endl;
-		/* Calculo dos graus */
-		std::vector < std::pair < int, int >>graus;
-		calculate_graus(&graus, matrizAdj);
-		double sum = 0;
-		for(int i = 0; i < qVertices; i++){
-			sum += 2 * harsh[i];
-		}
-		//std::cout << sum << std::endl;
-		//std::cout << "Valor da FO após a compensação  " << w << std::endl;
-		//std::cout << "Os melhores vértices com os pesos respectivamente são: " << vertice_a << " " << vertice_b << " " << grafo->at(0)[vertice_a] << " " << grafo->at(0)[vertice_b] << std::endl;
-			
-		//std::cout << "Graus de cada vertice: ";
-		for(int i = 0; i < qVertices; i++){
-			//std::cout << graus.at(i).second << " ";
-		}
-		//std::cout << std::endl;
 
-		/* Calculando o vetor subsubgradient*/
-		//std::cout << "Vetor subgradient: ";
+
 		for(int i = 0; i < qVertices; i++){
-			subgradient[i] = 2 - graus.at(i).second;
-			//std::cout << subgradient[i] << " ";
+			w += 2 * harsh[i];
 		}
 
-		
-		/* Calculando o produto interno bruto do subgradient*/
 		double PI = 0;
+		/* Calculando o vetor subsubgradient*/
 		for(int i = 0; i < qVertices; i++){
+			subgradient[i] = 2 - (*rates)[i];
 			PI += (subgradient[i] * subgradient[i]);
 		}
-		//std::cout << "Produto interno: " << PI << std::endl;
-		//std::cout << std::endl;
-		passos = ((epslon * (upper_bound - w))) / PI;
-		//std::cout << "Novo valor de passo: " << passos << std::endl;
 
+		step = ((epslon * (upper_bound - w))) / PI;
 
 		/* Altera o vetor de pesos */
-		////std::cout << "Novo vetor de pesos: ";
 		for(int i = 0; i < qVertices; i++){
-			harsh[i] += (passos * subgradient[i]);
-		//	//std::cout << harsh[i] << " ";
+			harsh[i] += (step * subgradient[i]);
 		}
-		////std::cout << std::endl;
+
 
 		if(w > w_ot){	
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
-			//getchar();
-			if(!not_violation(&subgradient))
+			if(!not_violation(&subgradient) or w_ot == upper_bound)
 				break;
-		
 			k = 0;
 
 		}else{
@@ -227,14 +193,12 @@ int main(int argc, char** argv){
 			if (k >= k_max){
 				k = 0;
 				epslon /= 2;
-				//getchar();
+
 			}
 			
 		}
 		
 	}while(epslon > epslon_min);
-	//std::cout << epslon << std::endl;
-	//std::cout << not_violation(&subgradient) << std::endl;
-	//std::cout << w_ot << std::endl;
+	std::cout << "Lower_bound: " << w_ot << std::endl;
 	return 0;
 }

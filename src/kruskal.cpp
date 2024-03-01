@@ -89,30 +89,8 @@ int Kruskal::setUnion(int vertice_a, int vertice_b){
 	return 1;
 
 }
-
-/* Função responsável por calcular o grau de cada vértice
-* Percorre o vetor de arestas incluida e verifica se o vertice está nela, caso sim
-* incremeta o grau em 1 */
-void Kruskal::calculate_grau(){
-	
-	int qVertices = this->tree->getSize();
-
-	for(int  i = 0; i < qVertices; i++){
-		
-		int g = 0;
-		for(Aresta  aresta : arestasIn){
-			
-			if(aresta.vertice_A == i or aresta.vertice_B == i){
-				g++;
-			}
-		}
-		this->graus.push_back(std::make_pair(i, g));
-	}
-}
-std::vector < std::pair <int,int>>* Kruskal::getGraus(){
-
-	return &(this->graus);
-
+std::vector < Aresta >* Kruskal::getEdges(){
+	return &(this->arestasIn);
 }
 
 std::vector < std::vector <int >> * Kruskal::getMatrizAdj(){
@@ -181,15 +159,8 @@ void Kruskal::algorithm(){
 		arestasOrdenadas.pop();
 
 	}
-	
-	/*
-	std::cout << "Arestas Utilizadas" << std::endl;
-	for(int  i = 0; i < this->arestasIn.size(); i++){
-		std::cout << this->arestasIn[i].vertice_A << "--" << this->arestasIn[i].vertice_B << std::endl;
-	}
-	*/
-	calculate_grau();
 	setMatrizAdj();
+	
 
 
 }

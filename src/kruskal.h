@@ -12,16 +12,14 @@ class Kruskal{
 		int findSet(int vertice);
 		int setUnion(int vertice_a, int vertice_b);
 		void algorithm();
-		void calculate_grau(); // Calcula o grau de todos os vértices da solução
-		std::vector < std::pair <int,int>>* getGraus();
 		std::vector < std::vector <int>>* getMatrizAdj();
 		void setMatrizAdj();
+		std::vector < Aresta > * getEdges();
 		double result;
 	private:
 		Tree* tree;
 		std::vector <std::vector <int>> matrizAdj;
 		std::vector < std::vector < double>>*grafo;
-		std::vector < std::pair<int,int>> graus; // Vetor que indica o vértice e seu grau
 		std::vector < Aresta > arestasIn;
 };
 
