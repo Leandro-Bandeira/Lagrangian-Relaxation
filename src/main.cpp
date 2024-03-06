@@ -92,7 +92,7 @@ int main(int argc, char** argv){
 	Queremos encontrar o melhor lower bound possivel,
 	pois como é um problema relaxado não é possivel ele ser melhor 
 	do que uma soluçao do problema original. Desse modo, para o TSP
-	é necessário achar uma árvore geradora mínima que não inclua o nó zero
+	é necessário achar 1-árvore geradora mínima que não inclua o nó zero
 	Se acharmos uma solução em que os vértices não violem a restrição relaxada,
 	temos então a solução ótima para o problema relaxado como também para o problema original.
 	Os step do algoritmo são o seguinte, resolvemos o problema relaxado sem o nó zero
@@ -106,16 +106,11 @@ int main(int argc, char** argv){
 			No primeiro loop esse vetor é nulo então o grafo de peso é o mesmo*/
 		for(int i = 0; i < qVertices; i++){
 			
-			for(int j = 0; j < qVertices; j++){
-				if(i == j)
-					continue;
+			for(int j = i + 1; j < qVertices; j++){
 				(*grafo)[i][j] = grafoOriginal[i][j]- harsh[i] - harsh[j];
 			}	
 		}
 		
-		
-		//std::cout << "Grafo Atualizado" << std::endl;
-		/* Printando nova matriz para debug */
 		
 		
 		/* Inicializando o algoritmo de kruskal */
@@ -123,7 +118,6 @@ int main(int argc, char** argv){
 		Kruskal kruskal(tree, grafo);
 		kruskal.algorithm();
 		double w = kruskal.result;
-		//std::cout << "Valor do kruskal: " << w << std::endl;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
 		/*Fim do algoritmo de kruskal */
 		

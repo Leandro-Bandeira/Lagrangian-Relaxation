@@ -128,7 +128,7 @@ void Kruskal::algorithm(){
 		
 		int col = this->grafo->at(i).size();
 
-		for(int j = 1; j < col; j++){
+		for(int j = i + 1; j < col; j++){
 		
 			/* Cria-se a aresta e então adiciona na priority_queue	*/
 			Aresta aresta;
