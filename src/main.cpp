@@ -1,5 +1,7 @@
 #include <iostream>
 #include "kruskal.h"
+#include <iterator>
+#include <memory>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -9,7 +11,8 @@
 #include "graph.h"
 #include <limits>
 #include "hungarian.h"
-
+#include <list>
+#include <iterator>
 
 typedef struct{
 	int vertice;
@@ -62,40 +65,40 @@ std::vector < std::vector < double > > * leitorInstancia(char* instanciaName){
 }
 
 
-/* Retorna o vértice de maior grau */
-
-void solve_hungarian(std::vector < std::vector < double >> *costMatrix){
+/*Retorna o vértice de maior grau da solução obtida no APTSP */
+int solve_hungarian(std::vector < std::vector < double >> *costMatrix, NodeInfoBnb* node){
   
   int n = costMatrix->size();
-  double **cost = new double*[n];
-
-  for (int i = 0; i < n; i++){
-    cost[i] = new double[n];
-    for (int j = 0; j < n; j++){
-      cost[i][j] = (*costMatrix)[i][j];
+  int size = n - 1;
+  double **cost = new double*[size];
+  /* Inicializamos coluna e linha como tendendo ao infinito para desconsiderar o nó zero no assignment problem */
+  for (int i = 0; i < size; i++){
+    cost[i] = new double[size];
+    for (int j = 0; j < size; j++){
+      cost[i][j] = (*costMatrix)[i  + 1][j+1];
       if(i == j)
-        cost[i][j] = 999999999;
+        cost[i][j] = 99999999; 
     }
   }
- 
   
+  for(int i = 0; i < node->forbbiden_arcs.size(); i++){
+    cost[node->forbbiden_arcs[i].first][node->forbbiden_arcs[i].second] = 99999999; 
+  }
   hungarian_problem_t p;
   int mode = HUNGARIAN_MODE_MINIMIZE_COST;
-  hungarian_init(&p, cost, n , n, mode); // Carregando o problema
+  hungarian_init(&p, cost, size , size, mode); // Carregando o problema
   
-  double lower_bound = hungarian_solve(&p);
+  std::cout << "Hungarian Cost Matrix:\n";
+  hungarian_print_costmatrix(&p); 
+  node->lower_bound = hungarian_solve(&p);
   
   int rows = p.num_rows;
   int cols = p.num_cols;
-
-  /* fim da matriz */
-  for(int i = 0; i < n; i++) delete [] cost[i];
-  delete [] cost;
-  
+ 
   /* Calculo do grau de cada solução */
-  std::vector < int > rates(n + 1,0);
+  std::vector < int > rates(n,0);
   
-  std::cout << "Hungarian Solution: " << std::endl;
+  std::cout << "Hungarian Solution: " << node->lower_bound << std::endl;
   hungarian_print_assignment(&p);
   for(int i = 0; i < n; i++){
 
@@ -103,19 +106,39 @@ void solve_hungarian(std::vector < std::vector < double >> *costMatrix){
     
       
       if(p.assignment[i][j] == 1){
-        rates[i+1] += 1;
-        rates[j+1] += 1;
+        rates[i] += 1;
+        rates[j] += 1;
       }
     }
   }
   
-  int nodeMoreRate = rates.end() - std::max_element(rates.begin(), rates.end());
-  std::cout << nodeMoreRate << std::endl;
-  for(int i = 1; i < n + 1; i++){
+  std::vector<int>::iterator VerticeMoreRate = std::max_element(rates.begin(), rates.end());
+  int indexVerticeMoreRate = std::distance(rates.begin(), VerticeMoreRate);
+  
+  std::cout << "Vertice Rates: ";
+  for(int i = 0; i < rates.size(); i++){
     std::cout << rates[i] << " ";
   }
-  getchar();
+  std::cout << std::endl;
+  
+  std::vector<std::vector<int>> listAdj(n);
+
+  for(int i = 0; i < n; i++){
+    std::cout << "listAdj[" << i << "]: ";
+    for(int j = 0; j < n; j++){
+      if(p.assignment[i][j] == 1){
+        listAdj[i].push_back(j);
+        std::cout << j << " ";
+      }
+    }
+    std::cout << std::endl;
+  }
+
+  return (indexVerticeMoreRate + 1);
+
 }
+
+
 /* Verifica se os pesos são todos nulos*/
 bool not_violation(std::vector<int>* subgradient){
 	int sum = 0;
@@ -128,6 +151,42 @@ bool not_violation(std::vector<int>* subgradient){
 }
 
 
+
+/* Retorna o indice do nó dado pela estratégia de branching
+ * BFS = 0 (sempre será escolhido o primeiro nó)
+ * DFS = 1 (sempre será escolhido o ultimo nó)
+ */
+int branchStrategy(std::list<NodeInfoBnb*>*tree){
+  int size = 2;
+  std::srand(time(0));
+
+  return std::rand() % size > 0 ? tree->size() - 1: 0; 
+  
+}
+
+/* Função responsável por calcular os arcos proibidos dado um determinado nó */
+void addForbiddenArcsToNode(std::vector<std::vector<int>>* lagrangeMatrix, NodeInfoBnb* node){
+
+  int n = lagrangeMatrix->size();
+  std::vector < int > rates (n,0);
+  for(int i = 1; i < n; i++){
+    for(int j = i + 1; j < n - 1; j++){
+      if((*lagrangeMatrix)[i][j] == 1){
+        rates[i] += 1;
+        rates[j] += 1;
+      }
+    }
+  }
+  std::vector<int>::iterator VerticeMoreRate = std::max_element(rates.begin(), rates.end());
+  int indexVerticeMoreRate = std::distance(rates.begin(), VerticeMoreRate);
+
+  for(int  j = 1; j < n; j++){
+    if(lagrangeMatrix->at(indexVerticeMoreRate)[j] == 1){
+      node->forbbiden_arcs.push_back((std::make_pair(indexVerticeMoreRate, j)));
+      node->forbbiden_arcs.push_back((std::make_pair(j, indexVerticeMoreRate)));
+    }
+  }
+}
 
 int main(int argc, char** argv){
 	
@@ -279,15 +338,32 @@ int main(int argc, char** argv){
   LagrangeMatrix[0][vertice_a] = LagrangeMatrix[vertice_a][0] = 0;
   LagrangeMatrix[0][vertice_b] = LagrangeMatrix[vertice_b][0] = 0;
   
-  std::cout << "Triangle Superior:\n";
-  for(int i = 0; i < qVertices; i++){
-    for(int j = 0; j < qVertices; j++){
+  NodeInfoBnb root; /* Nó raiz = será dado pela resolução da relaxacao */
+
+  addForbiddenArcsToNode(&LagrangeMatrix,&root); 
+  int indexVerticeMoreRate = solve_hungarian(&grafoDual, &root);
+
+  std::list<NodeInfoBnb*>tree;
+  tree.push_back(&root);
+
+  /*Bnb algorithm */ 
+  while(!tree.empty()){
+    int indexNode = branchStrategy(&tree);
+    /* Retorna o nó dependendo do método utilizado */
+    NodeInfoBnb* node = indexNode == 0 ? tree.front() : tree.back();
     
-      std::cout << grafoDual[i][j] << " ";
+    /* Avança o iterator para a posição do nó escolhido para depois apagá-lo */ 
+    std::list < NodeInfoBnb*>::iterator init = tree.begin();
+    advance(init, indexNode);
+
+    if(node->lower_bound > upper_bound){
+      tree.erase(init);
+      continue;
     }
-    std::cout << std::endl;
+     
+
   }
-  solve_hungarian(&grafoDual);
+
 
   return 0;
 }
