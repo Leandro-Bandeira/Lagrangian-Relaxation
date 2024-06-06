@@ -27,12 +27,12 @@ bool not_violation(std::vector<int>* subgradient){
 
 
 double Lagrange::algorithm(double upper_bound){
-    std::vector < std::vector < double >> costsDual;
+  std::vector < std::vector < double >> costsDual = *this->initCosts;
 	std::vector < std::vector < double > > costsOriginal = *this->initCosts;
 	/* Configuração da relaxação */	
 	int qVertices = this->initCosts->size();
 	
-  	std::vector < double > harsh(qVertices, 0); // Vetor penalizador
+  std::vector < double > harsh(qVertices, 0); // Vetor penalizador
 	std::vector < int > subgradient(qVertices, 0); // Vetor subgradient
 	double epslon = 1;
 	double epslon_min = 0.0005;
@@ -63,28 +63,25 @@ double Lagrange::algorithm(double upper_bound){
 		for(int i = 0; i < qVertices; i++){
 			
 			for(int j = i + 1; j < qVertices; j++){
-				(*this->initCosts)[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
-        (*this->initCosts)[j][i] = (*this->initCosts)[i][j];
+				costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
+        costsDual[j][i] = costsDual[i][j];
 			}
 		}
 		
 		
 		/* Inicializando o algoritmo de kruskal */
 		Tree* tree = new Tree(qVertices);
-		Kruskal kruskal(tree, this->initCosts);
+		Kruskal kruskal(tree, &costsDual);
 		kruskal.algorithm();
 		double w = kruskal.result;
 		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
-		/*Fim do algoritmo de kruskal */
-		
-	
 		/* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
 		std::vector < std::pair<int, double> > nodesSortedByEdge0;
 		
 
 		/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
 		for(int j = 1; j < qVertices; j++){
-			nodesSortedByEdge0.push_back(std::make_pair(j, this->initCosts->at(0)[j]));
+			nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
 		}
 
 		/* A função indica se a deve ser ordenado antes de b ou não,
@@ -101,14 +98,14 @@ double Lagrange::algorithm(double upper_bound){
 		vertice_b = nodesSortedByEdge0.back().first;
 		
 		/* Ativando as arestas */
-		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
+ 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
 		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
 
 		Graph graphOperation = Graph(matrizAdj);
 		graphOperation.calculateRates();
 		std::vector< int> * rates = graphOperation.getRates();
 		
-		w += this->initCosts->at(0)[vertice_a] + this->initCosts->at(0)[vertice_b];
+		w += costsDual[0][vertice_a] + costsDual[0][vertice_b];
 
 
 		for(int i = 0; i < qVertices; i++){
@@ -134,11 +131,15 @@ double Lagrange::algorithm(double upper_bound){
 			w_ot = w;
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 
+      lagrangeMatrix = *matrizAdj;
+      lagrangeCosts = costsDual;
+
+      /* Calculo do vértice de maior grau */
+      /* Para isso vamos 
+
       /* Quando estamos trabalhando com numeros flutuantes as vezes eles podem dar valores diferentes mesmo sendo iguais
        * Por exemplo : 0.3 * 3 + 0.1 deveria dar 1 e ser igual 1 porem isso não é verdade devido a precisao dos valores */ 
       if(!not_violation(&subgradient) or std::abs(upper_bound - w_ot) < 1e-9){
-        lagrangeMatrix = *matrizAdj;
-        costsDual = *this->initCosts;
         break;
       }
 				
@@ -156,6 +157,6 @@ double Lagrange::algorithm(double upper_bound){
 		
 	}while(epslon > epslon_min);
 	std::cout << "Lower_bound: " << w_ot << std::endl;
-
-    return w_ot;
+  this->best_lower_bound = w_ot;
+  return w_ot;
 }
