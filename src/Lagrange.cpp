@@ -42,7 +42,7 @@ double Lagrange::algorithm(double upper_bound){
 	double step = 1.0;
 
 	/***************************/
-
+  int globalVertice_a, globalVertice_b;
 	int vertice_a, vertice_b; /* vertices mais proximas do vertice zero */
 	/* Como estamos resolvendo um problema relaxado
 	Queremos encontrar o melhor lower bound possivel,
@@ -133,7 +133,9 @@ double Lagrange::algorithm(double upper_bound){
 
       lagrangeMatrix = *matrizAdj;
       lagrangeCosts = costsDual;
-
+       /* Salva os dois vertices */
+      verticesChoosen.first = vertice_a;
+      verticesChoosen.second = vertice_b;
       /* Calculo do vértice de maior grau */
       /* Para isso vamos 
 
