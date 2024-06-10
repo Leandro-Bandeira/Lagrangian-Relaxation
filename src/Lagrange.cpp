@@ -132,7 +132,7 @@ double Lagrange::algorithm(double upper_bound){
 			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 
       lagrangeMatrix = *matrizAdj;
-      lagrangeCosts = costsDual;
+      lagrangeCosts = costsOriginal;
        /* Salva os dois vertices */
       verticesChoosen.first = vertice_a;
       verticesChoosen.second = vertice_b;
