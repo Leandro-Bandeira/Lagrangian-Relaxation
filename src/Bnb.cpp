@@ -19,38 +19,37 @@ int Bnb::branchStrategy(){
   int size = 2;
   std::srand(time(0));
 
-  return std::rand() % size > 0 ? this->tree.size() - 1: 0; 
+  return (std::rand() % size > 0 ? this->tree.size() - 1: 0); 
   
 }
 
+
 void Bnb::initDfs(){
+  this->visitedVertices.clear();
+  this->visitedVertices.resize(listAdj.size(), 0);
+  this->PE.clear();
   this->PE.resize(listAdj.size(), 0);
+  this->v_fathers.clear();
   this->v_fathers.resize(listAdj.size(), 0);
+  this->PS.clear();
   this->PS.resize(listAdj.size(), 0);
   Bnb::t = 0;
 }
 void Bnb::dfs(int v, NodeInfoBnb* node){
   
   Bnb::t += 1;
+  visitedVertices[v]++;
   PE[v] = Bnb::t;
   std::vector < int > neighbors = listAdj[v];
   int sizeNeighbors = neighbors.size();
   int foundCicle = 0;
   for(int i = 0; i < sizeNeighbors; i++){
     int w = neighbors[i];
-  
     /* Se a gente nunca visitou w é porque o pai dele é v */ 
     if(PE[w] == 0){
       v_fathers[w] = v;
       dfs(w, node);
       
-    }
-    /* Se a gente já visitou w mas ainda não saimos da sua chamada e w não é o pai de v
-     * logo temos uma aresta de retorno ou um ciclo e a solução é inviável */ 
-    else{
-      if(PS[w] == 0 and w != v_fathers[v]){
-        node->feasible = false;
-      }
     }
   }
   Bnb::t += 1;
@@ -61,14 +60,9 @@ void Bnb::fullNode(NodeInfoBnb* node){
   node->lower_bound = lagrangeSolution->getBestLowerBound();
   std::vector < std::vector <int >> *matrixAdj = lagrangeSolution->getLagrangeMatrix();
   std::vector < int > rates(matrixAdj->size(), 0);
-  std::pair < int, int> verticesChoosen = lagrangeSolution->getVertices();
-  /* Vamos desativar as arestas do zero entre esses dois vertices para calcular o rate na 1-arvore */  
-  //matrixAdj->at(0)[verticesChoosen.first] = matrixAdj->at(verticesChoosen.first)[0] = 0;
-  //matrixAdj->at(0)[verticesChoosen.second] = matrixAdj->at(verticesChoosen.second)[0] = 0;
   
-  //matrixAdj->at(verticesChoosen.first)[verticesChoosen.second] = matrixAdj->at(verticesChoosen.second)[verticesChoosen.first] = 1;
   std::vector < int > neighboors;
-  
+  this->listAdj.clear();
   for(int i = 0; i < matrixAdj->size(); i++){
     for(int j = 0; j < matrixAdj->size(); j++){
       if(matrixAdj->at(i)[j])
@@ -86,6 +80,7 @@ void Bnb::fullNode(NodeInfoBnb* node){
     }
   }
   
+  std::cout << "tamanho da lista de adjacencia: " << listAdj.size() << "\n";
   std::cout << "lista de adjacencia:\n";
   for(int i = 0; i < listAdj.size(); i++){
     for(int j = 0; j < listAdj[i].size(); j++){
@@ -93,14 +88,26 @@ void Bnb::fullNode(NodeInfoBnb* node){
     }
     std::cout << "\n";
   }
-
-
+  
+  for(int i = 0; i < matrixAdj->size(); i++){
+    for(int j = 0; j < matrixAdj->size(); j++){
+      std::cout << matrixAdj->at(i)[j] << " ";
+    }
+    std::cout << "\n";
+  }
+  getchar();
   /* Vamos agora aplicar a busca em profundidade para procurar ciclos, achado o primeiro ciclo a solucao nao eh viavel */ 
 
   initDfs();
-  node->feasible = true;
   dfs(0, node);
-
+  
+  node->feasible = true;
+  for(int i = 0; i < visitedVertices.size(); i++){
+    if (visitedVertices[i] > 1){
+      node->feasible = false;
+      break;
+    }
+  }
   std::cout << "Grau dos vertices da solução lagrangiana: ";
   for(int i = 0; i < rates.size(); i++){
     std::cout << rates[i] << " ";
@@ -127,17 +134,18 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
     NodeInfoBnb* node = (indexNode == 0 ? this->tree.front() : this->tree.back());
     if (initBnb != 0){
       fullNode(node);
-      std::cout << "here" << std::endl;
-      getchar();
     }
+    std::cout << "id do nó escolhido: " << node->id << "\n";
     /* Avança o iterator para a posição do nó escolhido para depois apagá-lo */ 
     std::list < NodeInfoBnb*>::iterator init = this->tree.begin();
     advance(init, indexNode);
-    
+    std::cout << "Id do nó apos avanço do iterator: " << (*init)->id << "\n";
+    std::cout << "tamanho da arvore: " << tree.size() << "\n";
     if(node->lower_bound > upper_bound_lagrange){
       this->tree.erase(init);
       continue;
     }
+    
 
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
@@ -150,7 +158,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
      * 3 - Modificar a matriz de custos original com base nos arcos proibidos 
      * 4 - Calcular a solução de lagrange para o nó */
     else{
-      std::vector<std::vector<double>> fatherCosts = (*node->lagrangeSolution->getLagrangeCosts());
+      std::vector<std::vector<double>> fatherCosts = *(node->lagrangeSolution->getLagrangeCosts());
       std::vector < int > neighborsForbidden = listAdj[node->nodeChosen];
 
       for(int i = 0 ; i < neighborsForbidden.size(); i++){
@@ -162,8 +170,9 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
         double valueChield = currentLagrange->algorithm(upper_bound_lagrange);
         n->lagrangeSolution = currentLagrange;
         std::cout << "Chield lower_bound: " << valueChield << std::endl;
-        getchar();
         tree.push_back(n);
+
+        std::cout << "arco probido: " << node->nodeChosen << " " << nodeForbidden << "\n";
 
       }
     }

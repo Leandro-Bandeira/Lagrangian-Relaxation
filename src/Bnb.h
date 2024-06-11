@@ -12,7 +12,7 @@ typedef struct{
   int nodeChosen; /* Nó escolhido (aquele com maior grau) */ 
   double lower_bound; /* Custo da solução no algoritmo hungaro */
   bool feasible; /*Indica a viabilidade da solução */
-  Lagrange *lagrangeSolution;
+  Lagrange* lagrangeSolution;
   int id;
 }NodeInfoBnb;
 
@@ -35,6 +35,7 @@ private:
     std::vector < int > PE; /*Vector utilizado para a busca em profundidade*/
     std::vector <int> v_fathers;
     std::vector < int > PS;
+    std::vector < int > visitedVertices;
     std::list<NodeInfoBnb*>tree;
 };
 
