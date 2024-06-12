@@ -129,7 +129,7 @@ double Lagrange::algorithm(double upper_bound){
 
 		if(w > w_ot){	
 			w_ot = w;
-			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
+//			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
 
       lagrangeMatrix = *matrizAdj;
       lagrangeCosts = costsOriginal;
@@ -157,8 +157,8 @@ double Lagrange::algorithm(double upper_bound){
 			
 		}
 		
-	}while(epslon > epslon_min);
-	std::cout << "Lower_bound: " << w_ot << std::endl;
+	 }while(epslon > epslon_min);
+	//std::cout << "Lower_bound: " << w_ot << std::endl;
   this->best_lower_bound = w_ot;
   return w_ot;
 }
