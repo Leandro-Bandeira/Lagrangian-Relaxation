@@ -1,5 +1,4 @@
 #include <iostream>
-#include "kruskal.h"
 #include "Lagrange.h"
 #include <iterator>
 #include <memory>
@@ -14,7 +13,7 @@
 #include <list>
 #include <iterator>
 #include "Bnb.h"
-
+#include "Kruskal.h"
 typedef struct{
 	int vertice;
 	double valueAresta;

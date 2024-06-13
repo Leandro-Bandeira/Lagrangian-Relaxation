@@ -1,8 +1,7 @@
 #include "Lagrange.h"
-#include "kruskal.h"
 #include "graph.h"
 #include <algorithm>
-
+#include "Kruskal.h"
 
 /* Inicializa o método lagrange com a matriz de custos iniciais */
 Lagrange::Lagrange(std::vector <std::vector<double>>* costs){
@@ -57,25 +56,37 @@ double Lagrange::algorithm(double upper_bound){
 	Apos isso calcula o vetor subgradiente, que é dado por 2 - grau de cada vértice
 	calcula o passo e então muda o valor dos penalizadores, se acharmos um w melhor que o w_ot, atualizamos e resetamos k*/
 	do{
+   /* 
+    std::cout << "PENALIZADORES: ";
+    for(int i = 0; i < harsh.size(); i++){
+      std::cout << harsh[i] << " ";
+    }
+    std::cout << std::endl;
+
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
 		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
 			No primeiro loop esse vetor é nulo então o this->initCosts de peso é o mesmo*/
-		for(int i = 0; i < qVertices; i++){
+		
+	  //std::cout << "COSTS DUAL\n";
+    for(int i = 0; i < qVertices; i++){
 			
 			for(int j = i + 1; j < qVertices; j++){
+
 				costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
         costsDual[j][i] = costsDual[i][j];
+        //std::cout << costsDual[i][j] << " ";
 			}
+    //std::cout << "\n";
 		}
 		
+    
 		
-		/* Inicializando o algoritmo de kruskal */
-		Tree* tree = new Tree(qVertices);
-		Kruskal kruskal(tree, &costsDual);
-		kruskal.algorithm();
-		double w = kruskal.result;
-		std::vector < std::vector < int > >* matrizAdj = kruskal.getMatrizAdj();
-		/* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
+    Kruskal kruskal(costsDual);
+    kruskal.MST(qVertices);
+    std::vector<std::pair<int,int>> edges = kruskal.getEdges();
+    
+
+        /* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
 		std::vector < std::pair<int, double> > nodesSortedByEdge0;
 		
 
@@ -96,21 +107,51 @@ double Lagrange::algorithm(double upper_bound){
 		vertice_a = nodesSortedByEdge0.back().first;
 		nodesSortedByEdge0.pop_back();
 		vertice_b = nodesSortedByEdge0.back().first;
-		
-		/* Ativando as arestas */
- 		(*matrizAdj)[0][vertice_a] = (*matrizAdj)[0][vertice_b] = 1;
-		(*matrizAdj)[vertice_a][0] = (*matrizAdj)[vertice_b][0] = 1;
 
-		Graph graphOperation = Graph(matrizAdj);
+    edges.push_back(std::make_pair(0, vertice_a));
+    edges.push_back(std::make_pair(0, vertice_b));
+	  //getchar();
+    double w = 0;
+    for(int i = 0; i < edges.size(); i++){
+      w += costsDual[edges[i].first][edges[i].second];
+      //std::cout << edges[i].first + 1  << " " << edges[i].second + 1  << "\n";
+    }
+    //std::cout << "-------------------------------------\n";
+    //getchar();
+    std::vector < std::vector <int>> matrizAdj;
+
+    for(int i = 0; i < qVertices; i++){
+      matrizAdj.push_back(std::vector<int>(qVertices,0));
+    }
+
+    for(int i = 0; i < edges.size(); i++){
+      matrizAdj[edges[i].first][edges[i].second] = 1;
+      matrizAdj[edges[i].second][edges[i].first] = 1;
+    }
+    
+    /*
+	  std::cout << "MATRIZ DE ADJENCENCIA:\n"; 
+    for(int i = 0; i < matrizAdj.size(); i++){
+      for(int j = 0; j < matrizAdj[i].size(); j++){
+        std::cout << matrizAdj[i][j] << " ";
+      }
+    std::cout << "\n";
+
+    }
+    */
+    //getchar();
+		Graph graphOperation = Graph(&matrizAdj);
 		graphOperation.calculateRates();
 		std::vector< int> * rates = graphOperation.getRates();
 		
-		w += costsDual[0][vertice_a] + costsDual[0][vertice_b];
-
+    
 
 		for(int i = 0; i < qVertices; i++){
 			w += 2 * harsh[i];
 		}
+
+    //std::cout << w << std::endl;
+    //getchar();
 
 		double PI = 0;
 		/* Calculando o vetor subsubgradient*/
@@ -120,18 +161,18 @@ double Lagrange::algorithm(double upper_bound){
 		}
 
 		step = ((epslon * (upper_bound - w))) / PI;
+    
 
+    
 		/* Altera o vetor de pesos */
 		for(int i = 0; i < qVertices; i++){
 			harsh[i] += (step * subgradient[i]);
 		}
-
-
-		if(w > w_ot){	
+    
+   	if(w > w_ot){	
 			w_ot = w;
-//			std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
-
-      lagrangeMatrix = *matrizAdj;
+			//std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
+      lagrangeMatrix = matrizAdj;
       lagrangeCosts = costsOriginal;
        /* Salva os dois vertices */
       verticesChoosen.first = vertice_a;
@@ -158,7 +199,8 @@ double Lagrange::algorithm(double upper_bound){
 		}
 		
 	 }while(epslon > epslon_min);
-	//std::cout << "Lower_bound: " << w_ot << std::endl;
+	std::cout << "Lower_bound: " << w_ot << std::endl;
   this->best_lower_bound = w_ot;
+  //getchar();
   return w_ot;
 }

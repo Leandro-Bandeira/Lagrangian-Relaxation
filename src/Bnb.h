@@ -24,8 +24,7 @@ class Bnb{
     int branchStrategy();  
     void algorithm(Lagrange* lagrangeSolutionInit, double upper_bound);
     void fullNode(NodeInfoBnb* node);
-    void dfs(int v, NodeInfoBnb* node);
-    void initDfs();
+    bool viabilityChecker();
     static int idGeneral;
     static int t;
 private:
