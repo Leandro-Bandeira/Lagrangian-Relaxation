@@ -81,7 +81,7 @@ void Bnb::fullNode(NodeInfoBnb* node){
     std::cout << "\n";
   }
   
-  //getchar(); 
+  getchar(); 
   node->feasible = viabilityChecker();
   int indexNodeMoreRate = std::distance(rates.begin(), std::max_element(rates.begin(), rates.end()));
   node->nodeChosen = indexNodeMoreRate;
@@ -112,6 +112,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
     //std::cout << "tamanho da arvore: " << tree.size() << "\n";
     if(node->lower_bound > upper_bound_lagrange){
       this->tree.erase(init);
+      std::cout << "here" << std::endl;
       //getchar();
       continue;
     }
