@@ -185,7 +185,7 @@ double Lagrange::algorithm(double upper_bound){
    // getchar();
 
     //std::cout << "-------------------------------------\n";
-   	if(w > w_ot){	
+   	if(w >= w_ot){	
 			w_ot = w;
 			//std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
       lagrangeMatrix = matrizAdj;

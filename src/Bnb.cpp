@@ -70,7 +70,7 @@ void Bnb::fullNode(NodeInfoBnb* node){
     }
   }
    
- /* 
+  /*
   std::cout << "tamanho da lista de adjacencia: " << listAdj.size() << "\n";
   std::cout << "lista de adjacencia:\n";
   for(int i = 0; i < listAdj.size(); i++){
@@ -80,8 +80,8 @@ void Bnb::fullNode(NodeInfoBnb* node){
     
     std::cout << "\n";
   }
-  */
-  //getchar(); 
+  
+  *///getchar(); 
   node->feasible = viabilityChecker();
   int indexNodeMoreRate = std::distance(rates.begin(), std::max_element(rates.begin(), rates.end()));
   node->nodeChosen = indexNodeMoreRate;
@@ -111,9 +111,15 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
     advance(init, indexNode);
     //std::cout << "Id do nó apos avanço do iterator: " << (*init)->id << "\n";
     //std::cout << "tamanho da arvore: " << tree.size() << "\n";
-    if(node->lower_bound > upper_bound_lagrange){
+    if(node->lower_bound > upper_bound_lagrange -1){
       this->tree.erase(init);
-    //  std::cout << "here" << std::endl;
+      std::cout << "achou valor maior" << "\n";
+      //if(node->lower_bound == upper_bound_lagrange)
+      //{
+       // std::cout << node->lower_bound << "\n";
+        //getchar();
+      //}      
+        //  std::cout << "here" << std::endl;
       //getchar();
       continue;
     }
@@ -122,7 +128,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
       if(finded == 0){
-
+        finded++;
         std::cout << "best Upper_bound found: " << upper_bound << "\n";
         getchar();
       }
