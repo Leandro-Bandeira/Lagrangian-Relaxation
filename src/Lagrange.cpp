@@ -56,13 +56,14 @@ double Lagrange::algorithm(double upper_bound){
 	Apos isso calcula o vetor subgradiente, que é dado por 2 - grau de cada vértice
 	calcula o passo e então muda o valor dos penalizadores, se acharmos um w melhor que o w_ot, atualizamos e resetamos k*/
 	do{
-   /* 
+    
+    /*
     std::cout << "PENALIZADORES: ";
     for(int i = 0; i < harsh.size(); i++){
       std::cout << harsh[i] << " ";
     }
     std::cout << std::endl;
-
+    */ 
 		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
 		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
 			No primeiro loop esse vetor é nulo então o this->initCosts de peso é o mesmo*/
@@ -70,16 +71,23 @@ double Lagrange::algorithm(double upper_bound){
 	  //std::cout << "COSTS DUAL\n";
     for(int i = 0; i < qVertices; i++){
 			
-			for(int j = i + 1; j < qVertices; j++){
+			for(int j = 0; j < qVertices; j++){
 
 				costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
-        costsDual[j][i] = costsDual[i][j];
-        //std::cout << costsDual[i][j] << " ";
+        if(i == j){
+          costsDual[i][j] = 99999999;
+        }
+
 			}
-    //std::cout << "\n";
 		}
-		
-    
+    /*
+	  for(int i = 0; i < qVertices; i++){
+      for(int j = 0; j < qVertices; j++){
+        std::cout << costsDual[i][j] << " ";
+      }
+    std::cout << "\n";
+    }	
+    */ 
 		
     Kruskal kruskal(costsDual);
     kruskal.MST(qVertices);
@@ -110,13 +118,12 @@ double Lagrange::algorithm(double upper_bound){
 
     edges.push_back(std::make_pair(0, vertice_a));
     edges.push_back(std::make_pair(0, vertice_b));
-	  //getchar();
     double w = 0;
     for(int i = 0; i < edges.size(); i++){
       w += costsDual[edges[i].first][edges[i].second];
-      //std::cout << edges[i].first + 1  << " " << edges[i].second + 1  << "\n";
+      //std::cout << edges[i].first   << " " << edges[i].second   << "\n";
+      
     }
-    //std::cout << "-------------------------------------\n";
     //getchar();
     std::vector < std::vector <int>> matrizAdj;
 
@@ -151,24 +158,33 @@ double Lagrange::algorithm(double upper_bound){
 		}
 
     //std::cout << w << std::endl;
-    //getchar();
 
 		double PI = 0;
+    
+    //std::cout << "subgradiente: ";
 		/* Calculando o vetor subsubgradient*/
 		for(int i = 0; i < qVertices; i++){
 			subgradient[i] = 2 - (*rates)[i];
 			PI += (subgradient[i] * subgradient[i]);
 		}
-
-		step = ((epslon * (upper_bound - w))) / PI;
+    //for(int i = 0; i < subgradient.size(); i++){
+    //std::cout << subgradient[i] << " ";
+    //}
+    //std::cout << "\n";
+    //std::cout << "PI: " << PI << std::endl;
     
+    step = epslon * ((upper_bound - w) / PI);
+		//step = ((epslon * (upper_bound - w))) / PI;
+    //std::cout << "STEP: " << step << std::endl;
 
-    
 		/* Altera o vetor de pesos */
 		for(int i = 0; i < qVertices; i++){
 			harsh[i] += (step * subgradient[i]);
 		}
     
+   // getchar();
+
+    //std::cout << "-------------------------------------\n";
    	if(w > w_ot){	
 			w_ot = w;
 			//std::cout << "Novo valor do lower bound: " << w_ot << std::endl;

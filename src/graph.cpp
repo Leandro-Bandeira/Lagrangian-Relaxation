@@ -8,6 +8,7 @@ Graph::Graph(std::vector <std::vector<int>>* matrixAdj){
 void Graph::calculateRates(){
     
     int qEdges = matrixAdj->size();
+    this->rates.clear();
     this->rates.resize(qEdges, 0);
 
     /* A ideia é percorrer apenas o triangulo superior
@@ -21,7 +22,7 @@ void Graph::calculateRates(){
     for(int  i = 0; i < qEdges; i++){
         for(int j = i + 1; j < qEdges; j++){
 
-            if((*this->matrixAdj)[i][j]){
+            if((*this->matrixAdj)[i][j] == 1){
                 this->rates[i] += 1;
                 this->rates[j] += 1;
             }

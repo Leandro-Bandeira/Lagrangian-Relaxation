@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 #include "Lagrange.h"
 #include <iterator>
@@ -64,13 +65,14 @@ int main(int argc, char** argv){
 
 
 	std::vector < std::vector < double > >* costs = leitorInstancia(argv[1]);
-	double upper_bound = std::stoi(argv[2]); // Upper_bound dado por alguma heuristica conhecida
+	double upper_bound = std::stoi(argv[2]) + 1; // Upper_bound dado por alguma heuristica conhecida
 	Lagrange lagrange(costs);
+  auto inicio = std::chrono::high_resolution_clock::now();
 	double lower_bound = lagrange.algorithm(upper_bound);
   std::cout << "here" << std::endl; 	
   std::vector < std::vector <int>>*lagrangeMatrix = lagrange.getLagrangeMatrix();
   std::vector < std::vector <double>>*lagrangeCosts = lagrange.getLagrangeCosts();
-  std::cout << "lagrangeMatrix best solution: " << lagrangeMatrix->size() << "\n";
+  /*std::cout << "lagrangeMatrix best solution: " << lagrangeMatrix->size() << "\n";
   for(int i = 0; i < lagrangeMatrix->size(); i++){
     for(int j = 0; j < lagrangeMatrix->at(i).size(); j++){
       std::cout << lagrangeMatrix->at(i)[j] <<  " ";
@@ -85,8 +87,11 @@ int main(int argc, char** argv){
     std::cout << "\n";
   }
   /* Após resolver o dual lagrangiano, vamos utilizar o BNB */
+  
   Bnb bnb;
   bnb.algorithm(&lagrange,upper_bound);
-
+  auto fim = std::chrono::high_resolution_clock::now() - inicio;
+  long long ms = std::chrono::duration_cast<std::chrono::seconds>(fim).count();
+  std::cout << "time: " << ms << "\n";
   return 0;
 }

@@ -70,7 +70,7 @@ void Bnb::fullNode(NodeInfoBnb* node){
     }
   }
    
-  
+ /* 
   std::cout << "tamanho da lista de adjacencia: " << listAdj.size() << "\n";
   std::cout << "lista de adjacencia:\n";
   for(int i = 0; i < listAdj.size(); i++){
@@ -80,8 +80,8 @@ void Bnb::fullNode(NodeInfoBnb* node){
     
     std::cout << "\n";
   }
-  
-  getchar(); 
+  */
+  //getchar(); 
   node->feasible = viabilityChecker();
   int indexNodeMoreRate = std::distance(rates.begin(), std::max_element(rates.begin(), rates.end()));
   node->nodeChosen = indexNodeMoreRate;
@@ -96,6 +96,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
   this->tree.push_back(&root);
   int initBnb = 0;
   double upper_bound = root.lower_bound;
+  int finded = 0;
   /*Bnb algorithm */
   while(!this->tree.empty()){
     int indexNode = this->tree.size() - 1;
@@ -112,7 +113,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
     //std::cout << "tamanho da arvore: " << tree.size() << "\n";
     if(node->lower_bound > upper_bound_lagrange){
       this->tree.erase(init);
-      std::cout << "here" << std::endl;
+    //  std::cout << "here" << std::endl;
       //getchar();
       continue;
     }
@@ -120,8 +121,11 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
 
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
-      std::cout << "best Upper_bound found: " << upper_bound << "\n";
-      getchar();
+      if(finded == 0){
+
+        std::cout << "best Upper_bound found: " << upper_bound << "\n";
+        getchar();
+      }
     }
     /* Para criar os filhos, as seguintes etapas são necessarias 
      * 1 - Armazenar a matriz de custos do pai
@@ -142,7 +146,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
         //std::cout << "Chield lower_bound: " << valueChield << std::endl;
         tree.push_back(n);
 
-        std::cout << "arco probido: " << node->nodeChosen << " " << nodeForbidden << "\n";
+        //std::cout << "arco probido: " << node->nodeChosen << " " << nodeForbidden << "\n";
         //getchar();
       }
     }
