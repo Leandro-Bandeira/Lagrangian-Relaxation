@@ -12,14 +12,11 @@ class Lagrange{
         std::vector < std::vector<double>>* getLagrangeCosts(){return &this->lagrangeCosts;};
         double getBestLowerBound(){return this->best_lower_bound;};
 
-        std::pair <int, int> getVertices(){return this->verticesChoosen;};
     private:
         std::vector<std::vector<int>> lagrangeMatrix;
         std::vector<std::vector<double>> lagrangeCosts;
         std::vector<std::vector<double>>* initCosts;
         double best_lower_bound;
-        int nodeMoreRateBest; // Vértice de maior grau da solução
-        std::pair<int,int> verticesChoosen; /* vertices que o nó zero está entre */ 
 };
 
 

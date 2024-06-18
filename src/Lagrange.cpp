@@ -28,6 +28,8 @@ bool not_violation(std::vector<int>* subgradient){
 double Lagrange::algorithm(double upper_bound){
   std::vector < std::vector < double >> costsDual = *this->initCosts;
 	std::vector < std::vector < double > > costsOriginal = *this->initCosts;
+	this->lagrangeCosts = costsOriginal;
+
 	/* Configuração da relaxação */	
 	int qVertices = this->initCosts->size();
 	
@@ -185,16 +187,10 @@ double Lagrange::algorithm(double upper_bound){
    // getchar();
 
     //std::cout << "-------------------------------------\n";
-   	if(w >= w_ot){	
+   	if(w > w_ot){	
 			w_ot = w;
 			//std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
       lagrangeMatrix = matrizAdj;
-      lagrangeCosts = costsOriginal;
-       /* Salva os dois vertices */
-      verticesChoosen.first = vertice_a;
-      verticesChoosen.second = vertice_b;
-      /* Calculo do vértice de maior grau */
-      /* Para isso vamos 
 
       /* Quando estamos trabalhando com numeros flutuantes as vezes eles podem dar valores diferentes mesmo sendo iguais
        * Por exemplo : 0.3 * 3 + 0.1 deveria dar 1 e ser igual 1 porem isso não é verdade devido a precisao dos valores */ 
@@ -215,8 +211,6 @@ double Lagrange::algorithm(double upper_bound){
 		}
 		
 	 }while(epslon > epslon_min);
-	std::cout << "Lower_bound: " << w_ot << std::endl;
   this->best_lower_bound = w_ot;
-  //getchar();
   return w_ot;
 }

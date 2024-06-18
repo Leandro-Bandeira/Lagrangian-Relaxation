@@ -12,19 +12,6 @@ int Bnb::t = 0;
 Bnb::Bnb(){
 }
 
-/* Retorna o indice do nó dado pela estratégia de branching
- * BFS = 0 (sempre será escolhido o primeiro nó)
- * DFS = 1 (sempre será escolhido o ultimo nó)
- */
-int Bnb::branchStrategy(){
-  int size = 2;
-  std::srand(time(0));
-
-  return (std::rand() % size > 0 ? this->tree.size() - 1: 0); 
-  
-}
-
-
   
 /* Uma solução viável é um ciclo hamiltoniano 
  * logo cada vértice possui apenas 2 vizinhos
@@ -45,6 +32,10 @@ bool Bnb::viabilityChecker(){
   return feasible;
   
 }
+
+/* Função responsável por preencher as informações do nó 
+ * a partir da solução lagrangeana */ 
+
 void Bnb::fullNode(NodeInfoBnb* node){
   Lagrange *lagrangeSolution = node->lagrangeSolution;
   node->lower_bound = lagrangeSolution->getBestLowerBound();
@@ -70,18 +61,7 @@ void Bnb::fullNode(NodeInfoBnb* node){
     }
   }
    
-  /*
-  std::cout << "tamanho da lista de adjacencia: " << listAdj.size() << "\n";
-  std::cout << "lista de adjacencia:\n";
-  for(int i = 0; i < listAdj.size(); i++){
-    for(int j = 0; j < listAdj[i].size(); j++){
-      std::cout << listAdj[i][j] << " ";
-    }
-    
-    std::cout << "\n";
-  }
-  
-  *///getchar(); 
+
   node->feasible = viabilityChecker();
   int indexNodeMoreRate = std::distance(rates.begin(), std::max_element(rates.begin(), rates.end()));
   node->nodeChosen = indexNodeMoreRate;
@@ -89,7 +69,20 @@ void Bnb::fullNode(NodeInfoBnb* node){
   Bnb::idGeneral+=1;
 }
 
-void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange){
+
+
+void Bnb::deleteNode(std::list<NodeInfoBnb*>::iterator& postIterator){
+  
+  /* Primeiro vamos deletar todas as informações da solução lagrangeana */
+  
+  this->tree.erase(postIterator);
+  //delete (*postIterator);
+}
+
+
+
+
+void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange, const int branchingStrategy){
   NodeInfoBnb root; /* Nó raiz = será dado pela resolução da relaxacao */
   root.lagrangeSolution = lagrangeSolutionInit;
   fullNode(&root);
@@ -99,39 +92,29 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
   int finded = 0;
   /*Bnb algorithm */
   while(!this->tree.empty()){
-    int indexNode = this->tree.size() - 1;
+
+    int indexNode = 0;
+    /* Avança o iterator para a posição do nó escolhido para depois apagá-lo */ 
+    std::list < NodeInfoBnb*>::iterator init = this->tree.begin();
+
+    if(branchingStrategy == 1){
+      indexNode = this->tree.size() - 1;
+      advance(init, indexNode);
+    }
     /* Retorna o nó dependendo do método utilizado */
     NodeInfoBnb* node = (indexNode == 0 ? this->tree.front() : this->tree.back());
     if (initBnb != 0){
       fullNode(node);
     }
-    //std::cout << "id do nó escolhido: " << node->id << "\n";
-    /* Avança o iterator para a posição do nó escolhido para depois apagá-lo */ 
-    std::list < NodeInfoBnb*>::iterator init = this->tree.begin();
-    advance(init, indexNode);
-    //std::cout << "Id do nó apos avanço do iterator: " << (*init)->id << "\n";
-    //std::cout << "tamanho da arvore: " << tree.size() << "\n";
-    if(node->lower_bound > upper_bound_lagrange -1){
-      this->tree.erase(init);
-      std::cout << "achou valor maior" << "\n";
-      //if(node->lower_bound == upper_bound_lagrange)
-      //{
-       // std::cout << node->lower_bound << "\n";
-        //getchar();
-      //}      
-        //  std::cout << "here" << std::endl;
-      //getchar();
+
+    if(node->lower_bound > upper_bound_lagrange - 1){
+      deleteNode(init);
       continue;
     }
     
 
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
-      if(finded == 0){
-        finded++;
-        std::cout << "best Upper_bound found: " << upper_bound << "\n";
-        getchar();
-      }
     }
     /* Para criar os filhos, as seguintes etapas são necessarias 
      * 1 - Armazenar a matriz de custos do pai
@@ -149,14 +132,10 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange)
         Lagrange* currentLagrange = new Lagrange(&currentCosts);
         double valueChield = currentLagrange->algorithm(upper_bound_lagrange);
         n->lagrangeSolution = currentLagrange;
-        //std::cout << "Chield lower_bound: " << valueChield << std::endl;
         tree.push_back(n);
-
-        //std::cout << "arco probido: " << node->nodeChosen << " " << nodeForbidden << "\n";
-        //getchar();
       }
     }
-    this->tree.erase(init);
+    deleteNode(init);
     initBnb += 1;     
     
   }

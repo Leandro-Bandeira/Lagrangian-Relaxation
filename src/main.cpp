@@ -15,40 +15,42 @@
 #include <iterator>
 #include "Bnb.h"
 #include "Kruskal.h"
+
+
 typedef struct{
 	int vertice;
 	double valueAresta;
 }tNode;
 
-std::vector < std::vector < double > > * leitorInstancia(char* instanciaName){
-	
-	std::string linha;
-	std::string valor;
-	
-	std::fstream* arquivo = new std::fstream(instanciaName, std::ios::in);
 
-
+/* Realiza a leitura de uma matriz de custos */
+std::vector < std::vector < double > > * readInstance(char* instanceName){
+	
+	std::string line;
+	std::string value;
+	
+	std::fstream* fstreamFile = new std::fstream(instanceName, std::ios::in);
 
 	std::vector < std::vector <double>  > * costs = new std::vector < std::vector < double > >();
 
-	while(std::getline(*arquivo, linha)){
-		std::vector < double > arestaValores;
-		std::stringstream dadosLinha(linha);
-		arestaValores.clear();
+	while(std::getline(*fstreamFile, line)){
+		std::vector < double > costsLine;
+		std::stringstream dataLine(line);
+		costsLine.clear();
 
-		while(std::getline(dadosLinha, valor, ' ')){
+		while(std::getline(dataLine, value, ' ')){
 			
 			std::string::size_type sz;
 
-			arestaValores.push_back(std::stod(valor, &sz));
+			costsLine.push_back(std::stod(value, &sz));
 		}
 
-		costs->push_back(arestaValores);
+		costs->push_back(costsLine);
 
 	}
 	
-	arquivo->close();
-  delete arquivo;
+	fstreamFile->close();
+  delete fstreamFile;
 	return costs;
 
 
@@ -63,35 +65,27 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
+  std::cout << "Welcome to lagrange Relaxation algorithm insert:\n"; 
+  std::cout << "0: branching BFS\n";
+  std::cout << "1: branching DFS\n";
+  int bMethod = 0;
+  std::cin >> bMethod;
+  const int branchingMethod = bMethod;
 
-	std::vector < std::vector < double > >* costs = leitorInstancia(argv[1]);
+	std::vector < std::vector < double > >* costs = readInstance(argv[1]);
 	double upper_bound = std::stoi(argv[2]) + 1; // Upper_bound dado por alguma heuristica conhecida
 	Lagrange lagrange(costs);
   auto inicio = std::chrono::high_resolution_clock::now();
 	double lower_bound = lagrange.algorithm(upper_bound);
-  std::cout << "here" << std::endl; 	
+
   std::vector < std::vector <int>>*lagrangeMatrix = lagrange.getLagrangeMatrix();
   std::vector < std::vector <double>>*lagrangeCosts = lagrange.getLagrangeCosts();
-  /*std::cout << "lagrangeMatrix best solution: " << lagrangeMatrix->size() << "\n";
-  for(int i = 0; i < lagrangeMatrix->size(); i++){
-    for(int j = 0; j < lagrangeMatrix->at(i).size(); j++){
-      std::cout << lagrangeMatrix->at(i)[j] <<  " ";
-    }
-    std::cout << "\n";
-  }
-  std::cout << "lagranteCosts best solution: \n";
-  for(int i = 0; i < lagrangeCosts->size(); i++){
-    for(int j = 0; j < lagrangeCosts->at(i).size(); j++){
-      std::cout << lagrangeCosts->at(i)[j] << " ";
-    }
-    std::cout << "\n";
-  }
-  /* Após resolver o dual lagrangiano, vamos utilizar o BNB */
-  
+
   Bnb bnb;
-  bnb.algorithm(&lagrange,upper_bound);
+  bnb.algorithm(&lagrange,upper_bound, branchingMethod);
   auto fim = std::chrono::high_resolution_clock::now() - inicio;
   long long ms = std::chrono::duration_cast<std::chrono::seconds>(fim).count();
   std::cout << "time: " << ms << "\n";
+  delete costs;
   return 0;
 }
