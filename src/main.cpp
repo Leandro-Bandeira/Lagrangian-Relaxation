@@ -1,3 +1,5 @@
+#include "Data.h"
+#include <iostream>
 #include <chrono>
 #include <iostream>
 #include "Lagrange.h"
@@ -23,39 +25,6 @@ typedef struct{
 }tNode;
 
 
-/* Realiza a leitura de uma matriz de custos */
-std::vector < std::vector < double > > * readInstance(char* instanceName){
-	
-	std::string line;
-	std::string value;
-	
-	std::fstream* fstreamFile = new std::fstream(instanceName, std::ios::in);
-
-	std::vector < std::vector <double>  > * costs = new std::vector < std::vector < double > >();
-
-	while(std::getline(*fstreamFile, line)){
-		std::vector < double > costsLine;
-		std::stringstream dataLine(line);
-		costsLine.clear();
-
-		while(std::getline(dataLine, value, ' ')){
-			
-			std::string::size_type sz;
-
-			costsLine.push_back(std::stod(value, &sz));
-		}
-
-		costs->push_back(costsLine);
-
-	}
-	
-	fstreamFile->close();
-  delete fstreamFile;
-	return costs;
-
-
-}
-
 	
 int main(int argc, char** argv){
 	
@@ -64,16 +33,36 @@ int main(int argc, char** argv){
 		std::cout << "Digite ./main -nome instancia- -upper_bound-\n";
 		exit(1);
 	}
+	
+	
+  auto data = Data(argc, argv[1]);
+  data.read();
+  size_t n = data.getDimension();
 
-  std::cout << argv[1] << "\n";
+  double cost = 0.0;
+  for (size_t i = 1; i < n; i++) {
+      cost += data.getDistance(i, i+1);
+  }
+  cost += data.getDistance(n, 1);
+ 
   std::cout << "Welcome to lagrange Relaxation algorithm insert:\n"; 
   std::cout << "0: branching BFS\n";
   std::cout << "1: branching DFS\n";
   int bMethod = 0;
   std::cin >> bMethod;
   const int branchingMethod = bMethod;
-
-	std::vector < std::vector < double > >* costs = readInstance(argv[1]);
+  
+  double** costsMatrix = data.getMatrixCost();
+	std::vector < std::vector < double > >* costs = new std::vector<std::vector<double>>;
+  
+  for(int i = 0; i < n; i++){
+    std::vector < double > costsLine;
+    for(int j = 0; j < n; j++){
+      costsLine.push_back(costsMatrix[i][j]);
+    }
+    costs->push_back(costsLine);
+    costsLine.clear();
+  }
 	double upper_bound = std::stoi(argv[2]) + 1; // Upper_bound dado por alguma heuristica conhecida
 	Lagrange lagrange(costs);
   auto inicio = std::chrono::high_resolution_clock::now();
@@ -90,3 +79,4 @@ int main(int argc, char** argv){
   delete costs;
   return 0;
 }
+

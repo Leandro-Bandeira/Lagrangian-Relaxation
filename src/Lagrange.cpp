@@ -66,10 +66,13 @@ double Lagrange::algorithm(double upper_bound){
     for(int i = 0; i < qVertices; i++){
 			
 		for(int j = 0; j < qVertices; j++){
-			costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
-        	if(i == j){
-          		costsDual[i][j] = 99999999;
-       	 	}
+			if(i == 0){
+
+      }
+      costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
+      if(i == j){
+          costsDual[i][j] = 99999999;
+      }
 		}
 	}
     	
@@ -79,26 +82,63 @@ double Lagrange::algorithm(double upper_bound){
     
 
     /* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
-	std::vector < std::pair<int, double> > nodesSortedByEdge0;
+	  std::vector < std::pair<int, double> > nodesSortedByEdge0;
 		
 
-	/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
-	for(int j = 1; j < qVertices; j++){
-		nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
-	}
+	  /* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
+	  for(int j = 1; j < qVertices; j++){
+		  nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
+	  }
 
-	/* A função indica se a deve ser ordenado antes de b ou não,
-	se for true, a será ordenado antes de b, caso não será b
-	então se a for menor ou igual a b, a será ordenado antes de b
-	Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
-	sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
-	{
-		return a.second >= b.second;
-	});
+	  /* A função indica se a deve ser ordenado antes de b ou não,
+	  se for true, a será ordenado antes de b, caso não será b
+	  então se a for menor ou igual a b, a será ordenado antes de b
+	  Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
+	  sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
+	  {
+		  return a.second >= b.second;
+	  });
 
-	vertice_a = nodesSortedByEdge0.back().first;
-	nodesSortedByEdge0.pop_back();
-	vertice_b = nodesSortedByEdge0.back().first;
+	  vertice_a = nodesSortedByEdge0.back().first;
+	  nodesSortedByEdge0.pop_back();
+	  vertice_b = nodesSortedByEdge0.back().first;
+    
+    /*int new_vertice_a = 1;
+    int new_vertice_b = 1;
+    for(int  j = 2; j < qVertices; j++){
+      if(costsDual[0][j] < costsDual[0][new_vertice_a]){
+        if(j != new_vertice_b){
+          new_vertice_a = j;
+        }
+      }
+      if(costsDual[0][j] < costsDual[0][new_vertice_b]){
+        if(j != new_vertice_a){
+          new_vertice_b = j;
+        }
+      }
+    }
+    */
+    int counter = 0;
+    double lessFirst = 99999999;
+    double lessSecond = 99999999;
+    int new_vertice_a = 1;
+    int new_vertice_b = 1;
+    // 8 4 2 10 3 5
+    for(int j = 1; j < qVertices; j++){
+      if(costsDual[0][j] < lessFirst){
+        new_vertice_a = j;
+        lessSecond = lessFirst;
+        lessFirst = costsDual[0][j];
+      }else if(costsDual[0][j] < lessSecond){
+        new_vertice_b = j;
+        lessSecond = costsDual[0][j];
+      }
+    }
+    std::cout << vertice_a << "\n";
+    std::cout << vertice_b << "\n";
+    std::cout << new_vertice_a << "\n";
+    std::cout << new_vertice_b << "\n";
+    getchar();
 
     edges.push_back(std::make_pair(0, vertice_a));
     edges.push_back(std::make_pair(0, vertice_b));

@@ -35,6 +35,10 @@ Data::~Data(){
 	delete [] distMatrix;
 }
 
+
+void Data::saveMatrixDist(){
+  std::string outputName = "";
+}
 void Data::read(){
 
 	ifstream inTSP(instaceName, ios::in);
