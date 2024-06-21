@@ -59,74 +59,53 @@ double Lagrange::algorithm(double upper_bound){
 	calcula o passo e então muda o valor dos penalizadores, se acharmos um w melhor que o w_ot, atualizamos e resetamos k*/
 	do{
     
-    /*
-    std::cout << "PENALIZADORES: ";
-    for(int i = 0; i < harsh.size(); i++){
-      std::cout << harsh[i] << " ";
-    }
-    std::cout << std::endl;
-    */ 
-		/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
-		/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
-			No primeiro loop esse vetor é nulo então o this->initCosts de peso é o mesmo*/
+	/* Primeiro temos que alterar a matriz de peso de acordo com o vetor de pesos */
+	/* Inicialmente vamos alterar a matriz toda, depois otimizados para utilizar apenas o triangulo superior
+		No primeiro loop esse vetor é nulo então o this->initCosts de peso é o mesmo*/
 		
-	  //std::cout << "COSTS DUAL\n";
     for(int i = 0; i < qVertices; i++){
 			
-			for(int j = 0; j < qVertices; j++){
-
-				costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
-        if(i == j){
-          costsDual[i][j] = 99999999;
-        }
-
-			}
+		for(int j = 0; j < qVertices; j++){
+			costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
+        	if(i == j){
+          		costsDual[i][j] = 99999999;
+       	 	}
 		}
-    /*
-	  for(int i = 0; i < qVertices; i++){
-      for(int j = 0; j < qVertices; j++){
-        std::cout << costsDual[i][j] << " ";
-      }
-    std::cout << "\n";
-    }	
-    */ 
-		
+	}
+    	
     Kruskal kruskal(costsDual);
     kruskal.MST(qVertices);
     std::vector<std::pair<int,int>> edges = kruskal.getEdges();
     
 
-        /* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
-		std::vector < std::pair<int, double> > nodesSortedByEdge0;
+    /* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
+	std::vector < std::pair<int, double> > nodesSortedByEdge0;
 		
 
-		/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
-		for(int j = 1; j < qVertices; j++){
-			nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
-		}
+	/* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
+	for(int j = 1; j < qVertices; j++){
+		nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
+	}
 
-		/* A função indica se a deve ser ordenado antes de b ou não,
-		se for true, a será ordenado antes de b, caso não será b
-		então se a for menor ou igual a b, a será ordenado antes de b
-		Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
-		sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
-		{
-				return a.second >= b.second;
-		});
+	/* A função indica se a deve ser ordenado antes de b ou não,
+	se for true, a será ordenado antes de b, caso não será b
+	então se a for menor ou igual a b, a será ordenado antes de b
+	Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
+	sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
+	{
+		return a.second >= b.second;
+	});
 
-		vertice_a = nodesSortedByEdge0.back().first;
-		nodesSortedByEdge0.pop_back();
-		vertice_b = nodesSortedByEdge0.back().first;
+	vertice_a = nodesSortedByEdge0.back().first;
+	nodesSortedByEdge0.pop_back();
+	vertice_b = nodesSortedByEdge0.back().first;
 
     edges.push_back(std::make_pair(0, vertice_a));
     edges.push_back(std::make_pair(0, vertice_b));
     double w = 0;
     for(int i = 0; i < edges.size(); i++){
-      w += costsDual[edges[i].first][edges[i].second];
-      //std::cout << edges[i].first   << " " << edges[i].second   << "\n";
-      
+      w += costsDual[edges[i].first][edges[i].second];    
     }
-    //getchar();
     std::vector < std::vector <int>> matrizAdj;
 
     for(int i = 0; i < qVertices; i++){
@@ -138,67 +117,44 @@ double Lagrange::algorithm(double upper_bound){
       matrizAdj[edges[i].second][edges[i].first] = 1;
     }
     
-    /*
-	  std::cout << "MATRIZ DE ADJENCENCIA:\n"; 
-    for(int i = 0; i < matrizAdj.size(); i++){
-      for(int j = 0; j < matrizAdj[i].size(); j++){
-        std::cout << matrizAdj[i][j] << " ";
-      }
-    std::cout << "\n";
-
-    }
-    */
-    //getchar();
-		Graph graphOperation = Graph(&matrizAdj);
-		graphOperation.calculateRates();
-		std::vector< int> * rates = graphOperation.getRates();
+    
+	Graph graphOperation = Graph(&matrizAdj);
+	graphOperation.calculateRates();
+	std::vector< int> * rates = graphOperation.getRates();
 		
     
 
-		for(int i = 0; i < qVertices; i++){
-			w += 2 * harsh[i];
-		}
+	for(int i = 0; i < qVertices; i++){
+		w += 2 * harsh[i];
+	}
 
-    //std::cout << w << std::endl;
-
-		double PI = 0;
     
-    //std::cout << "subgradiente: ";
-		/* Calculando o vetor subsubgradient*/
-		for(int i = 0; i < qVertices; i++){
-			subgradient[i] = 2 - (*rates)[i];
-			PI += (subgradient[i] * subgradient[i]);
-		}
-    //for(int i = 0; i < subgradient.size(); i++){
-    //std::cout << subgradient[i] << " ";
-    //}
-    //std::cout << "\n";
-    //std::cout << "PI: " << PI << std::endl;
+
+	double PI = 0;
+    
+    for(int i = 0; i < qVertices; i++){
+		subgradient[i] = 2 - (*rates)[i];
+		PI += (subgradient[i] * subgradient[i]);
+	}
     
     step = epslon * ((upper_bound - w) / PI);
-		//step = ((epslon * (upper_bound - w))) / PI;
-    //std::cout << "STEP: " << step << std::endl;
-
-		/* Altera o vetor de pesos */
-		for(int i = 0; i < qVertices; i++){
-			harsh[i] += (step * subgradient[i]);
-		}
-    
-   // getchar();
-
-    //std::cout << "-------------------------------------\n";
+	
+	/* Altera o vetor de pesos */
+	for(int i = 0; i < qVertices; i++){
+		harsh[i] += (step * subgradient[i]);
+	}
+        
    	if(w > w_ot){	
-			w_ot = w;
-			//std::cout << "Novo valor do lower bound: " << w_ot << std::endl;
-      lagrangeMatrix = matrizAdj;
+		w_ot = w;
+      	lagrangeMatrix = matrizAdj;
 
-      /* Quando estamos trabalhando com numeros flutuantes as vezes eles podem dar valores diferentes mesmo sendo iguais
-       * Por exemplo : 0.3 * 3 + 0.1 deveria dar 1 e ser igual 1 porem isso não é verdade devido a precisao dos valores */ 
-      if(!not_violation(&subgradient) or std::abs(upper_bound - w_ot) < 1e-9){
-        break;
-      }
+      	/* Quando estamos trabalhando com numeros flutuantes as vezes eles podem dar valores diferentes mesmo sendo iguais
+       	* Por exemplo : 0.3 * 3 + 0.1 deveria dar 1 e ser igual 1 porem isso não é verdade devido a precisao dos valores */ 
+      	if(!not_violation(&subgradient) or std::abs(upper_bound - w_ot) < 1e-9){
+        	break;
+      	}
 				
-			k = 0;
+		k = 0;
 
 		}else{
 			k += 1;

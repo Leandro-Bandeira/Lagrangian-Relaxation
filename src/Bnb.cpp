@@ -22,12 +22,18 @@ bool Bnb::viabilityChecker(){
   bool feasible = true;
   const int sizeList = listAdj.size();
 
+  int count = 0;
   for(int i = 0; i < sizeList; i++){
     const int sizeNeighbors = listAdj[i].size();
-    if(sizeNeighbors > 2){
-      feasible = false;
-      break;
+    if(sizeNeighbors == 2){
+      count++;
     }
+  }
+
+  if (count == sizeList){
+    feasible = true;
+  }else{
+    feasible = false;
   }
   return feasible;
   
@@ -115,6 +121,7 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange,
 
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
+      std::cout << "found feasible: " << upper_bound << "\n";
     }
     /* Para criar os filhos, as seguintes etapas são necessarias 
      * 1 - Armazenar a matriz de custos do pai
