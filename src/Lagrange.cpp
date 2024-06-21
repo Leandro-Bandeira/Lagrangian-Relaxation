@@ -41,11 +41,12 @@ double Lagrange::algorithm(double upper_bound){
 	int k_max = 30;
 	int k = 0;
 	double step = 1.0;
-
+  int vertice_a, vertice_b;
 	/***************************/
   int globalVertice_a, globalVertice_b;
-	int vertice_a, vertice_b; /* vertices mais proximas do vertice zero */
-	/* Como estamos resolvendo um problema relaxado
+	
+  /* vertices mais proximas do vertice zero */
+  /* Como estamos resolvendo um problema relaxado
 	Queremos encontrar o melhor lower bound possivel,
 	pois como é um problema relaxado não é possivel ele ser melhor 
 	do que uma soluçao do problema original. Desse modo, para o TSP
@@ -102,7 +103,7 @@ double Lagrange::algorithm(double upper_bound){
 	  vertice_a = nodesSortedByEdge0.back().first;
 	  nodesSortedByEdge0.pop_back();
 	  vertice_b = nodesSortedByEdge0.back().first;
-    
+  
     /*int new_vertice_a = 1;
     int new_vertice_b = 1;
     for(int  j = 2; j < qVertices; j++){
@@ -123,23 +124,39 @@ double Lagrange::algorithm(double upper_bound){
     double lessSecond = 99999999;
     int new_vertice_a = 1;
     int new_vertice_b = 1;
+    std::vector<std::pair<double,int>>vertices(2);
     // 8 4 2 10 3 5
+    vertices[0] = std::make_pair(0, 99999999);
+    vertices[1] = std::make_pair(0, 99999999);
+
+    for(int j = 1; j < qVertices; j++){
+      if(costsDual[0][j] < vertices[0].second){
+        vertices[0].second = costsDual[0][j];
+        vertices[0].first = j;
+      }else{
+        if(costsDual[0][j] < vertices[1].second){
+          vertices[1].second = costsDual[0][j];
+          vertices[1].first = j;
+        }
+      }
+    }
     for(int j = 1; j < qVertices; j++){
       if(costsDual[0][j] < lessFirst){
         new_vertice_a = j;
         lessSecond = lessFirst;
         lessFirst = costsDual[0][j];
-      }else if(costsDual[0][j] < lessSecond){
+      }
+      if(lessFirst < lessSecond and costsDual[0][j] < lessSecond){
         new_vertice_b = j;
         lessSecond = costsDual[0][j];
       }
     }
     std::cout << vertice_a << "\n";
     std::cout << vertice_b << "\n";
-    std::cout << new_vertice_a << "\n";
-    std::cout << new_vertice_b << "\n";
+    std::cout << vertices[0].first << "\n";
+    std::cout << vertices[1].first << "\n";
     getchar();
-
+    getchar();
     edges.push_back(std::make_pair(0, vertice_a));
     edges.push_back(std::make_pair(0, vertice_b));
     double w = 0;
