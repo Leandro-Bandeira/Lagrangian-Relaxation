@@ -65,6 +65,7 @@ int main(int argc, char** argv){
 		exit(1);
 	}
 
+  std::cout << argv[1] << "\n";
   std::cout << "Welcome to lagrange Relaxation algorithm insert:\n"; 
   std::cout << "0: branching BFS\n";
   std::cout << "1: branching DFS\n";
