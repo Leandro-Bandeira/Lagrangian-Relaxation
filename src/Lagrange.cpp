@@ -41,9 +41,7 @@ double Lagrange::algorithm(double upper_bound){
 	int k_max = 30;
 	int k = 0;
 	double step = 1.0;
-  int vertice_a, vertice_b;
 	/***************************/
-  int globalVertice_a, globalVertice_b;
 	
   /* vertices mais proximas do vertice zero */
   /* Como estamos resolvendo um problema relaxado
@@ -82,83 +80,28 @@ double Lagrange::algorithm(double upper_bound){
     std::vector<std::pair<int,int>> edges = kruskal.getEdges();
     
 
-    /* Nós ordenados de acordo com sua distancia em relação ao nó zero*/
-	  std::vector < std::pair<int, double> > nodesSortedByEdge0;
-		
+    std::pair<double,int> infoVertice_a;
+    infoVertice_a.first = 99999999;
+    infoVertice_a.second = -1;
+    std::pair<double,int> infoVertice_b;
+    infoVertice_b.first = 99999999;
+    infoVertice_b.second = -1;
 
-	  /* Adiciona todos os vértices e suas respectivas distancias ao nó zero	*/
-	  for(int j = 1; j < qVertices; j++){
-		  nodesSortedByEdge0.push_back(std::make_pair(j, costsDual[0][j]));
-	  }
-
-	  /* A função indica se a deve ser ordenado antes de b ou não,
-	  se for true, a será ordenado antes de b, caso não será b
-	  então se a for menor ou igual a b, a será ordenado antes de b
-	  Logo estamos organizando em ordem descrecente, para podermos pegar os vértices em o(1)*/
-	  sort(nodesSortedByEdge0.begin(), nodesSortedByEdge0.end(), [](const std::pair<int,double>&a, std::pair<int,double>const &b)
-	  {
-		  return a.second >= b.second;
-	  });
-
-	  vertice_a = nodesSortedByEdge0.back().first;
-	  nodesSortedByEdge0.pop_back();
-	  vertice_b = nodesSortedByEdge0.back().first;
-  
-    /*int new_vertice_a = 1;
-    int new_vertice_b = 1;
-    for(int  j = 2; j < qVertices; j++){
-      if(costsDual[0][j] < costsDual[0][new_vertice_a]){
-        if(j != new_vertice_b){
-          new_vertice_a = j;
-        }
+    for(int  j = 1; j < qVertices; j++){
+      if(costsDual[0][j] < infoVertice_a.first){  
+        infoVertice_b.first = infoVertice_a.first;
+        infoVertice_b.second = infoVertice_a.second;
+        infoVertice_a.second = j;
+        infoVertice_a.first = costsDual[0][j];
       }
-      if(costsDual[0][j] < costsDual[0][new_vertice_b]){
-        if(j != new_vertice_a){
-          new_vertice_b = j;
-        }
+      else if(costsDual[0][j] < infoVertice_b.first){
+        infoVertice_b.second = j;
+        infoVertice_b.first = costsDual[0][j];
       }
     }
-    */
-    int counter = 0;
-    double lessFirst = 99999999;
-    double lessSecond = 99999999;
-    int new_vertice_a = 1;
-    int new_vertice_b = 1;
-    std::vector<std::pair<double,int>>vertices(2);
-    // 8 4 2 10 3 5
-    vertices[0] = std::make_pair(0, 99999999);
-    vertices[1] = std::make_pair(0, 99999999);
-
-    for(int j = 1; j < qVertices; j++){
-      if(costsDual[0][j] < vertices[0].second){
-        vertices[0].second = costsDual[0][j];
-        vertices[0].first = j;
-      }else{
-        if(costsDual[0][j] < vertices[1].second){
-          vertices[1].second = costsDual[0][j];
-          vertices[1].first = j;
-        }
-      }
-    }
-    for(int j = 1; j < qVertices; j++){
-      if(costsDual[0][j] < lessFirst){
-        new_vertice_a = j;
-        lessSecond = lessFirst;
-        lessFirst = costsDual[0][j];
-      }
-      if(lessFirst < lessSecond and costsDual[0][j] < lessSecond){
-        new_vertice_b = j;
-        lessSecond = costsDual[0][j];
-      }
-    }
-    std::cout << vertice_a << "\n";
-    std::cout << vertice_b << "\n";
-    std::cout << vertices[0].first << "\n";
-    std::cout << vertices[1].first << "\n";
-    getchar();
-    getchar();
-    edges.push_back(std::make_pair(0, vertice_a));
-    edges.push_back(std::make_pair(0, vertice_b));
+    
+    edges.push_back(std::make_pair(0, infoVertice_a.second));
+    edges.push_back(std::make_pair(0, infoVertice_b.second));
     double w = 0;
     for(int i = 0; i < edges.size(); i++){
       w += costsDual[edges[i].first][edges[i].second];    

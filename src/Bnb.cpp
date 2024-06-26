@@ -121,7 +121,10 @@ void Bnb::algorithm(Lagrange* lagrangeSolutionInit, double upper_bound_lagrange,
 
     if(node->feasible){
       upper_bound = std::max(upper_bound, node->lower_bound);
-      std::cout << "found feasible: " << upper_bound << "\n";
+      if(finded == 0){
+        std::cout << "found feasible: " << upper_bound << "\n";
+        finded = 1;
+      }
     }
     /* Para criar os filhos, as seguintes etapas são necessarias 
      * 1 - Armazenar a matriz de custos do pai
