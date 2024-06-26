@@ -65,9 +65,6 @@ double Lagrange::algorithm(double upper_bound){
     for(int i = 0; i < qVertices; i++){
 			
 		for(int j = 0; j < qVertices; j++){
-			if(i == 0){
-
-      }
       costsDual[i][j] = costsOriginal[i][j]- harsh[i] - harsh[j];
       if(i == j){
           costsDual[i][j] = 99999999;
@@ -79,7 +76,14 @@ double Lagrange::algorithm(double upper_bound){
     kruskal.MST(qVertices);
     std::vector<std::pair<int,int>> edges = kruskal.getEdges();
     
-
+    /* Algoritmo para achar os dois menores valores de um array
+     * vamos iniciar ambos como infinito e -1 para os vértices
+     * após isso temos que percorrer o array e achar o primeiro menor
+     * , após achado o valor atualiza o vértice b para os antigos valores do 
+     * vértice A e atualiza o vértice A.
+     * Caso eu ache um valor maior do que o vértice A e menor do que o vertice B
+     * vamos atualizar apenas o vértice B.
+     * O algoritmo acha os 2 menores valores em O(n) */
     std::pair<double,int> infoVertice_a;
     infoVertice_a.first = 99999999;
     infoVertice_a.second = -1;
